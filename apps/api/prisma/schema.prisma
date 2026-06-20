@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          Role      @default(INFLUENCER)
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  brand         BrandProfile?
+  influencer    InfluencerProfile?
+  refreshTokens RefreshToken[]
+}
+
+enum Role {
+  BRAND
+  INFLUENCER
+  ADMIN
+}
+
+model BrandProfile {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  logo        String?
+  description String?
+  website     String?
+  industry    String?
+  verified    Boolean    @default(false)
+  campaigns   Campaign[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model InfluencerProfile {
+  id              String                @id @default(cuid())
+  userId          String                @unique
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName     String
+  avatar          String?
+  bio             String?
+  niche           String[]
+  followersCount  Int                   @default(0)
+  engagementRate  Float                 @default(0)
+  verified        Boolean               @default(false)
+  platforms       Platform[]
+  applications    CampaignApplication[]
+  invitations     CampaignInvitation[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+}
+
+model Platform {
+  id           String            @id @default(cuid())
+  influencerId String
+  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  name         PlatformName
+  handle       String
+  followers    Int               @default(0)
+  verified     Boolean           @default(false)
+
+  @@unique([influencerId, name])
+}
+
+enum PlatformName {
+  INSTAGRAM
+  YOUTUBE
+  TIKTOK
+  TWITTER
+  LINKEDIN
+  PINTEREST
+}
+
+model Campaign {
+  id           String                @id @default(cuid())
+  brandId      String
+  brand        BrandProfile          @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  budget       Float
+  budgetType   BudgetType
+  criteria     Json
+  status       CampaignStatus        @default(DRAFT)
+  campaignCode String                @unique @default(cuid())
+  startDate    DateTime?
+  endDate      DateTime?
+  applications CampaignApplication[]
+  invitations  CampaignInvitation[]
+  payments     Payment[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
+
+enum BudgetType {
+  FLAT_FEE
+  CPA
+  MIXED
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model CampaignApplication {
+  id           String            @id @default(cuid())
+  campaignId   String
+  campaign     Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencerId String
+  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  status       ApplicationStatus @default(PENDING)
+  pitch        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([campaignId, influencerId])
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model CampaignInvitation {
+  id           String            @id @default(cuid())
+  campaignId   String
+  campaign     Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencerId String
+  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  status       InvitationStatus  @default(PENDING)
+  message      String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([campaignId, influencerId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  campaignId   String
+  campaign     Campaign      @relation(fields: [campaignId], references: [id])
+  amount       Float
+  status       PaymentStatus @default(PENDING)
+  type         PaymentType
+  lockedAt     DateTime?
+  releasedAt   DateTime?
+  releaseAfter DateTime?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  LOCKED
+  RELEASED
+  DISPUTED
+  REFUNDED
+}
+
+enum PaymentType {
+  UPFRONT
+  FLAT_FEE
+  CPA_PAYOUT
+  REFUND
+}
+
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      Role
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

@@ -2,7 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+// On GitHub Actions, CI=true — serve from /influencex/ (the repo name)
+const base = process.env.CI ? "/influencex/" : "/";
+
 export default defineConfig({
+  base,
   plugins: [react()],
   resolve: {
     alias: {

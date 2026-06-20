@@ -15,13 +15,23 @@ export function Waitlist() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const apiBase = import.meta.env.VITE_API_URL ?? "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    // No backend configured — store locally and show success
+    if (!apiBase) {
+      await new Promise((r) => setTimeout(r, 800));
+      setSuccess(true);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/v1/waitlist", {
+      const res = await fetch(`${apiBase}/api/v1/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, name, role }),

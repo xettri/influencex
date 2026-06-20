@@ -2,60 +2,57 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 
 const stats = [
-  { value: 10000, suffix: "+", label: "Creator Target", prefix: "" },
-  { value: 100, suffix: "+", label: "Brand Partnerships", prefix: "" },
-  { value: 50, suffix: "%", label: "Avg. Upfront Secured", prefix: "" },
-  { value: 15, suffix: " days", label: "Payment Guarantee", prefix: "" },
+  { value: 10000, suffix: "+", label: "Creator target", desc: "across all niches" },
+  { value: 100, suffix: "+", label: "Brand slots", desc: "at launch" },
+  { value: 50, suffix: "%", label: "Upfront secured", desc: "before any work" },
+  { value: 15, suffix: "d", label: "Payment hold", desc: "then auto-release" },
 ];
 
-function Counter({ value, prefix, suffix, duration = 1500 }: { value: number; prefix: string; suffix: string; duration?: number }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
+function Counter({ to, suffix, active }: { to: number; suffix: string; active: boolean }) {
+  const [val, setVal] = useState(0);
 
   useEffect(() => {
-    if (!inView) return;
-    const startTime = performance.now();
-    const step = (timestamp: number) => {
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * value));
-      if (progress < 1) requestAnimationFrame(step);
+    if (!active) return;
+    const dur = 1400;
+    const start = performance.now();
+    const step = (now: number) => {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.floor(eased * to));
+      if (p < 1) requestAnimationFrame(step);
+      else setVal(to);
     };
     requestAnimationFrame(step);
-  }, [inView, value, duration]);
+  }, [active, to]);
 
   return (
-    <span ref={ref}>
-      {prefix}{count.toLocaleString("en-IN")}{suffix}
-    </span>
+    <>{val.toLocaleString("en-IN")}{suffix}</>
   );
 }
 
 export function StatsBar() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
 
   return (
-    <section ref={ref} className="relative py-16 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-950/30 via-purple-950/20 to-blue-950/30" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+    <section ref={ref} className="relative py-14 border-y border-white/6">
+      <div className="absolute inset-0 bg-gradient-to-r from-violet-950/10 via-indigo-950/10 to-violet-950/10" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, i) => (
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/6 rounded-2xl overflow-hidden">
+          {stats.map((s, i) => (
             <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="text-center"
+              key={s.label}
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
+              className="bg-[#030305] px-6 py-8 text-center"
             >
-              <div className="text-3xl sm:text-4xl font-extrabold text-gradient mb-1">
-                <Counter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
+              <div className="text-[2rem] font-black text-gradient mb-1 tabular-nums">
+                <Counter to={s.value} suffix={s.suffix} active={inView} />
               </div>
-              <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
+              <p className="text-[13px] font-semibold text-zinc-300 mb-0.5">{s.label}</p>
+              <p className="text-[11px] text-zinc-600">{s.desc}</p>
             </motion.div>
           ))}
         </div>

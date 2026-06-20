@@ -1,192 +1,162 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, TrendingUp, Shield, Star } from "lucide-react";
-import { useRef } from "react";
+import { motion } from "framer-motion";
+import { ArrowRight, TrendingUp, ShieldCheck, Star, Zap, Users } from "lucide-react";
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: "easeOut" },
+});
 
 const floatingCards = [
   {
-    id: 1,
-    type: "brand",
-    name: "Nike Launch",
-    metric: "+340% ROI",
-    sub: "via InfluenceX",
-    color: "from-orange-500/20 to-red-500/20",
-    border: "border-orange-500/20",
     icon: TrendingUp,
-    position: "top-32 -left-4 md:left-12",
-    delay: 0,
+    label: "Nike Air Launch",
+    value: "+340% ROI",
+    sub: "via InfluenceX",
+    className: "top-[22%] -left-2 lg:left-10 animate-float-a",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-400/10 border-emerald-400/20",
   },
   {
-    id: 2,
-    type: "creator",
-    name: "Sarah K.",
-    metric: "₹2.4L earned",
-    sub: "this month",
-    color: "from-violet-500/20 to-purple-500/20",
-    border: "border-violet-500/20",
     icon: Star,
-    position: "top-48 -right-4 md:right-12",
-    delay: 0.3,
+    label: "Creator payout",
+    value: "₹2.4L earned",
+    sub: "this month",
+    className: "top-[38%] -right-2 lg:right-10 animate-float-b",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-400/10 border-violet-400/20",
   },
   {
-    id: 3,
-    type: "campaign",
-    name: "Secure payment",
-    metric: "Lock & Hold",
-    sub: "15-day guarantee",
-    color: "from-emerald-500/20 to-teal-500/20",
-    border: "border-emerald-500/20",
-    icon: Shield,
-    position: "bottom-32 -left-4 md:left-20",
-    delay: 0.6,
+    icon: ShieldCheck,
+    label: "Lock & Hold",
+    value: "Escrow secured",
+    sub: "15-day release",
+    className: "bottom-[28%] -left-2 lg:left-16 animate-float-c",
+    iconColor: "text-blue-400",
+    iconBg: "bg-blue-400/10 border-blue-400/20",
   },
 ];
 
 export function Hero() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 200]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Background orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1.5s" }} />
-        <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "3s" }} />
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-14">
+      {/* Dot grid background */}
+      <div className="absolute inset-0 dot-grid opacity-100 pointer-events-none" />
 
-        {/* Grid overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(139,92,246,1) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,1) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
+      {/* Radial glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-violet-700/12 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 left-1/3 w-80 h-80 bg-indigo-600/8 rounded-full blur-3xl" />
       </div>
 
-      <motion.div style={{ y, opacity }} className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Tag */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex justify-center mb-6"
-        >
-          <div className="section-tag">
-            <Sparkles className="w-3 h-3" />
-            Exclusive. Transparent. Results-first.
+      {/* Top edge fade */}
+      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[#030305] to-transparent pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 text-center">
+        {/* Badge */}
+        <motion.div {...fadeUp(0)} className="flex justify-center mb-7">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/8 border border-violet-500/18 text-violet-300 text-[11px] font-bold tracking-widest uppercase">
+            <Zap className="w-3 h-3" fill="currentColor" />
+            Exclusive · Transparent · Results-first
           </div>
         </motion.div>
 
         {/* Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold leading-[1.05] tracking-tight mb-6"
+          {...fadeUp(0.08)}
+          className="text-[clamp(2.6rem,8vw,5.5rem)] font-black leading-[1.02] tracking-tight mb-6"
         >
           <span className="text-white">Launch Products.</span>
           <br />
           <span className="text-gradient">Not Guesses.</span>
         </motion.h1>
 
-        {/* Sub */}
+        {/* Sub-headline */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="max-w-2xl mx-auto text-lg sm:text-xl text-slate-400 leading-relaxed mb-10"
+          {...fadeUp(0.16)}
+          className="max-w-xl mx-auto text-[clamp(1rem,2.5vw,1.15rem)] text-zinc-400 leading-relaxed mb-10"
         >
           The only platform built exclusively for{" "}
-          <span className="text-white font-medium">product launch campaigns</span>. Brands meet
-          vetted creators, campaigns ship with flat-fee clarity, and payments are locked until results
-          are delivered.
+          <span className="text-zinc-200 font-medium">product launch campaigns</span>.
+          Flat-fee pricing, escrow payments, and contracts — all in one place.
         </motion.p>
 
-        {/* CTAs */}
+        {/* CTA row */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+          {...fadeUp(0.22)}
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14"
         >
-          <a
-            href="#waitlist"
-            className="group btn-primary text-base py-3.5 px-8 glow-purple"
-          >
+          <a href="#waitlist" className="btn-primary text-sm py-3 px-7 glow-sm w-full sm:w-auto">
             Get Early Access — Free
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4" />
           </a>
-          <a href="#how-it-works" className="btn-secondary text-base py-3.5 px-8">
+          <a href="#how-it-works" className="btn-secondary text-sm py-3 px-7 w-full sm:w-auto">
             See How It Works
           </a>
         </motion.div>
 
-        {/* Social proof strip */}
+        {/* Social proof */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="flex items-center justify-center gap-6 flex-wrap"
+          {...fadeUp(0.28)}
+          className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3"
         >
-          <div className="flex -space-x-2">
-            {["AB", "RK", "PG", "SM", "VT"].map((initials, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full border-2 border-bg-primary flex items-center justify-center text-xs font-bold text-white"
-                style={{
-                  background: `hsl(${250 + i * 15}, 70%, 45%)`,
-                  zIndex: 5 - i,
-                }}
-              >
-                {initials}
-              </div>
-            ))}
+          {/* Avatars */}
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {["#7c3aed", "#6366f1", "#8b5cf6", "#4f46e5", "#a78bfa"].map((bg, i) => (
+                <div
+                  key={i}
+                  className="w-7 h-7 rounded-full border-2 border-[#030305] flex items-center justify-center"
+                  style={{ background: bg, zIndex: 5 - i }}
+                >
+                  <Users className="w-3 h-3 text-white/80" />
+                </div>
+              ))}
+            </div>
+            <span className="text-[13px] text-zinc-500">
+              <span className="text-zinc-300 font-semibold">500+ creators</span> on waitlist
+            </span>
           </div>
-          <p className="text-sm text-slate-400">
-            <span className="text-white font-semibold">500+ creators</span> already on the waitlist
-          </p>
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            ))}
-            <span className="text-sm text-slate-400 ml-1">5.0 pilot rating</span>
+
+          <div className="w-px h-4 bg-white/10 hidden sm:block" />
+
+          {/* Stars */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              ))}
+            </div>
+            <span className="text-[13px] text-zinc-500">
+              <span className="text-zinc-300 font-semibold">5.0</span> pilot rating
+            </span>
           </div>
         </motion.div>
-      </motion.div>
+      </div>
 
-      {/* Floating cards */}
-      {floatingCards.map((card) => {
-        const Icon = card.icon;
-        return (
-          <motion.div
-            key={card.id}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 + card.delay }}
-            className={`absolute hidden lg:block ${card.position} z-20`}
-            style={{ animation: `float ${6 + card.delay}s ease-in-out infinite` }}
-          >
-            <div
-              className={`glass border ${card.border} rounded-2xl px-4 py-3 flex items-center gap-3 min-w-[180px]`}
-            >
-              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${card.color} border ${card.border} flex items-center justify-center flex-shrink-0`}>
-                <Icon className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">{card.name}</p>
-                <p className="text-sm font-bold text-white">{card.metric}</p>
-                <p className="text-xs text-slate-500">{card.sub}</p>
+      {/* Floating cards — hidden on small screens */}
+      <div className="absolute inset-0 pointer-events-none hidden lg:block">
+        {floatingCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className={`absolute ${card.className}`}>
+              <div className="glass rounded-xl px-3.5 py-3 flex items-center gap-3 min-w-[176px] shadow-xl shadow-black/40">
+                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${card.iconBg}`}>
+                  <Icon className={`w-4 h-4 ${card.iconColor}`} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-zinc-500 mb-0.5">{card.label}</p>
+                  <p className="text-sm font-bold text-white leading-tight">{card.value}</p>
+                  <p className="text-[11px] text-zinc-600">{card.sub}</p>
+                </div>
               </div>
             </div>
-          </motion.div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#05050f] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#030305] to-transparent pointer-events-none" />
     </section>
   );
 }

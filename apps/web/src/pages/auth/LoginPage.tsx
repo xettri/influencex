@@ -117,6 +117,29 @@ export function LoginPage() {
             <p className="text-[14px] text-ink-muted">Sign in to your InfluenceX account</p>
           </div>
 
+          {import.meta.env.VITE_MOCK === "true" && (
+            <div className="mb-5 p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+              <p className="text-[11px] font-bold text-amber-700 uppercase tracking-widest mb-2.5">Demo accounts</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ email: "brand@demo.com", password: "demo123" })}
+                  className="flex-1 py-2 px-3 rounded-lg bg-white border border-amber-200 text-[12px] font-bold text-amber-800 hover:bg-amber-100 transition-colors"
+                >
+                  Brand Account
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ email: "creator@demo.com", password: "demo123" })}
+                  className="flex-1 py-2 px-3 rounded-lg bg-white border border-amber-200 text-[12px] font-bold text-amber-800 hover:bg-amber-100 transition-colors"
+                >
+                  Creator Account
+                </button>
+              </div>
+              <p className="text-[10px] text-amber-600 mt-2 text-center">Password: <span className="font-bold">demo123</span> · No backend needed</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <motion.div

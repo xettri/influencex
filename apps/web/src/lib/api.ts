@@ -1,3 +1,5 @@
+import { mockRequest } from "./mock-handler";
+
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 // Module-level state — wired by auth store on initialisation
@@ -25,6 +27,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
+  // Mock mode: active when VITE_MOCK=true OR no backend URL is configured
+  if (import.meta.env.VITE_MOCK === "true" || !import.meta.env.VITE_API_URL) {
+    try {
+      return await mockRequest<T>(path, opts, _token);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) throw err;
+      const e = err as Record<string, unknown>;
+      throw new ApiError(
+        typeof e.status === "number" ? e.status : 500,
+        typeof e.message === "string" ? e.message : "Mock error",
+        typeof e.code === "string" ? e.code : undefined
+      );
+    }
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((opts.headers as Record<string, string>) ?? {}),

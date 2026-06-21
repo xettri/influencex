@@ -7,6 +7,8 @@ import type { InfluencerProfile, Platform, PlatformName, RateCard } from "@influ
 import { UpdateInfluencerProfileSchema, AddPlatformSchema } from "@influencex/shared";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
+import { useSocialPreview } from "@/hooks/useSocialPreview";
+import { SocialPreviewCard } from "@/components/dashboard/SocialPreviewCard";
 
 const PLATFORMS: { value: PlatformName; label: string; color: string; url: (handle: string) => string }[] = [
   { value: "INSTAGRAM", label: "Instagram", color: "bg-pink-500", url: (h) => `https://instagram.com/${h}` },
@@ -222,6 +224,8 @@ export function ProfileSetupPage() {
     handle: "",
     followers: "",
   });
+
+  const socialPreview = useSocialPreview(newPlatform.name, newPlatform.handle);
 
   useEffect(() => {
     api.get<InfluencerProfile>("/api/v1/influencers/me")
@@ -507,6 +511,14 @@ export function ProfileSetupPage() {
                 />
               </div>
             </div>
+
+            <SocialPreviewCard
+              status={socialPreview.status}
+              data={socialPreview.data}
+              platform={newPlatform.name}
+              handle={newPlatform.handle}
+            />
+
             <button type="submit" disabled={addingPlatform} className="btn-outline text-[13px] py-2.5 px-4 disabled:opacity-60">
               {addingPlatform ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Plus className="w-3.5 h-3.5" /> Add platform</>}
             </button>

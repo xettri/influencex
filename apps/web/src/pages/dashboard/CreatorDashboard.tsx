@@ -12,6 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
+import type { PaginatedResponse } from "@influencex/shared";
 
 interface Campaign {
   id: string;
@@ -118,8 +119,8 @@ export function CreatorDashboard() {
 
   useEffect(() => {
     api
-      .get<{ items: Campaign[] }>("/api/v1/campaigns?limit=6")
-      .then((data) => setCampaigns(data.items ?? []))
+      .get<PaginatedResponse<Campaign>>("/api/v1/campaigns?limit=6")
+      .then((data) => setCampaigns(data.items))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

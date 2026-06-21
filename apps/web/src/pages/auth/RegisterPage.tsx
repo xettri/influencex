@@ -11,6 +11,7 @@ import {
   Star,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
+import { toast } from "@/store/toast";
 
 type Role = "BRAND" | "INFLUENCER";
 
@@ -46,6 +47,7 @@ export function RegisterPage() {
     e.preventDefault();
     try {
       await register({ ...form, role });
+      toast.success("Account created! Welcome to InfluenceX.");
       navigate("/dashboard");
     } catch {}
   };

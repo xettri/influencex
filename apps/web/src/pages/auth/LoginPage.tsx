@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap, ArrowRight, Eye, EyeOff, Loader2, CheckCircle2, ShieldCheck, TrendingUp } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
+import { toast } from "@/store/toast";
 
 const features = [
   { icon: ShieldCheck, text: "Escrow-protected campaigns" },
@@ -28,6 +29,7 @@ export function LoginPage() {
     e.preventDefault();
     try {
       await login(form.email, form.password);
+      toast.success("Welcome back!");
       navigate(from, { replace: true });
     } catch {}
   };

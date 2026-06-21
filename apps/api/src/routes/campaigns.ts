@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import type { Prisma } from "@prisma/client";
 import {
   CreateCampaignSchema,
   UpdateCampaignSchema,
@@ -7,15 +8,30 @@ import {
 import { sendSuccess, sendPaginated, sendError } from "../utils/response.js";
 
 const campaignRoutes: FastifyPluginAsync = async (fastify) => {
-  // GET /campaigns — public list of active campaigns
+  // GET /campaigns — public list of active campaigns with optional search + filter
   fastify.get("/", async (request, reply) => {
-    const q = request.query as { page?: string; limit?: string };
+    const q = request.query as {
+      page?: string;
+      limit?: string;
+      search?: string;
+      budgetType?: string;
+    };
     const page = Math.max(1, Number(q.page ?? 1));
     const limit = Math.min(50, Math.max(1, Number(q.limit ?? 20)));
 
+    const where: Prisma.CampaignWhereInput = { status: "ACTIVE" };
+
+    if (q.budgetType && ["FLAT_FEE", "CPA", "MIXED"].includes(q.budgetType)) {
+      where.budgetType = q.budgetType as "FLAT_FEE" | "CPA" | "MIXED";
+    }
+
+    if (q.search?.trim()) {
+      where.title = { contains: q.search.trim(), mode: "insensitive" };
+    }
+
     const [campaigns, total] = await Promise.all([
       fastify.prisma.campaign.findMany({
-        where: { status: "ACTIVE" },
+        where,
         include: {
           brand: { select: { name: true, logo: true, industry: true, verified: true } },
           _count: { select: { applications: true } },
@@ -24,7 +40,7 @@ const campaignRoutes: FastifyPluginAsync = async (fastify) => {
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      fastify.prisma.campaign.count({ where: { status: "ACTIVE" } }),
+      fastify.prisma.campaign.count({ where }),
     ]);
 
     return sendPaginated(reply, campaigns, total, page, limit);

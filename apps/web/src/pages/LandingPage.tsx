@@ -11,7 +11,7 @@ import { Footer } from "@/components/landing/Footer";
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="flex flex-col min-h-screen bg-canvas">
       <Navbar />
       <Hero />
       <Marquee />

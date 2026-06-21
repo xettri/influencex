@@ -8,8 +8,9 @@ const bentoCells = [
     title: "Post your campaign in 5 minutes",
     desc: "Set budget, criteria, timeline, and fee model. Your campaign goes live instantly.",
     span: "lg:col-span-2",
-    accent: "from-violet-500 to-indigo-600",
-    light: "bg-violet-50",
+    gradient: "from-violet-500/10 via-indigo-500/5 to-transparent",
+    border: "border-violet-200/60",
+    iconGrad: "from-violet-500 to-indigo-600",
     iconColor: "text-violet-600",
     large: true,
   },
@@ -18,8 +19,9 @@ const bentoCells = [
     title: "AI creator matching",
     desc: "Our algorithm surfaces the top 5% of relevant creators for your specific product launch.",
     span: "lg:col-span-1",
-    accent: "from-indigo-500 to-blue-600",
-    light: "bg-indigo-50",
+    gradient: "from-indigo-500/8 to-transparent",
+    border: "border-indigo-200/50",
+    iconGrad: "from-indigo-500 to-blue-600",
     iconColor: "text-indigo-600",
     large: false,
   },
@@ -28,8 +30,9 @@ const bentoCells = [
     title: "Precision targeting",
     desc: "Filter by platform, niche, follower band, engagement rate, and region.",
     span: "lg:col-span-1",
-    accent: "from-blue-500 to-cyan-600",
-    light: "bg-blue-50",
+    gradient: "from-blue-500/8 to-transparent",
+    border: "border-blue-200/50",
+    iconGrad: "from-blue-500 to-cyan-600",
     iconColor: "text-blue-600",
     large: false,
   },
@@ -38,8 +41,9 @@ const bentoCells = [
     title: "Real-time analytics",
     desc: "CPC, CPA, and conversion tracked via unique campaign codes. Live dashboards.",
     span: "lg:col-span-1",
-    accent: "from-emerald-500 to-teal-600",
-    light: "bg-emerald-50",
+    gradient: "from-emerald-500/8 to-transparent",
+    border: "border-emerald-200/50",
+    iconGrad: "from-emerald-500 to-teal-600",
     iconColor: "text-emerald-600",
     large: false,
   },
@@ -48,8 +52,9 @@ const bentoCells = [
     title: "Escrow payment protection",
     desc: "Funds locked before work starts. Creators only paid after delivery is confirmed.",
     span: "lg:col-span-2",
-    accent: "from-amber-500 to-orange-600",
-    light: "bg-amber-50",
+    gradient: "from-amber-500/8 to-transparent",
+    border: "border-amber-200/50",
+    iconGrad: "from-amber-500 to-orange-600",
     iconColor: "text-amber-600",
     large: false,
   },
@@ -76,7 +81,7 @@ export function ForBrands() {
   return (
     <section id="for-brands" ref={ref} className="py-24 sm:py-32 bg-section-alt">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-start mb-16">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start mb-14">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -99,15 +104,18 @@ export function ForBrands() {
             initial={{ opacity: 0, y: 20 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="grid sm:grid-cols-2 gap-4"
+            className="grid grid-cols-1 xs:grid-cols-2 gap-4"
           >
             {/* Before */}
-            <div className="card-white p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-4">Without InfluenceX</p>
+            <div className="rounded-2xl p-5 bg-red-50/50 border border-red-200/60">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-500">Without InfluenceX</p>
+              </div>
               <div className="space-y-3">
                 {pains.map((p) => (
                   <div key={p} className="flex items-start gap-2.5">
-                    <div className="w-5 h-5 rounded-full bg-red-50 border border-red-200 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-red-100 border border-red-200 flex items-center justify-center shrink-0 mt-0.5">
                       <X className="w-3 h-3 text-red-500" strokeWidth={2.5} />
                     </div>
                     <span className="text-[12px] text-ink-muted leading-snug">{p}</span>
@@ -117,8 +125,11 @@ export function ForBrands() {
             </div>
 
             {/* After */}
-            <div className="rounded-[1.25rem] bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-4">With InfluenceX</p>
+            <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50/80 border border-violet-200/60 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-violet-600">With InfluenceX</p>
+              </div>
               <div className="space-y-3">
                 {gains.map((g) => (
                   <div key={g} className="flex items-start gap-2.5">
@@ -134,7 +145,7 @@ export function ForBrands() {
         </div>
 
         {/* Bento grid */}
-        <div className="grid lg:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
           {bentoCells.map((cell, i) => {
             const Icon = cell.icon;
             return (
@@ -143,13 +154,29 @@ export function ForBrands() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.45, delay: 0.15 + i * 0.07 }}
-                className={`card-white-hover p-6 ${cell.span} ${cell.large ? "lg:row-span-1" : ""}`}
+                className={`relative rounded-2xl p-6 border bg-gradient-to-br ${cell.gradient} ${cell.border} overflow-hidden group
+                  hover:shadow-[0_8px_40px_-4px_rgba(124,58,237,0.14)] hover:-translate-y-1 transition-all duration-300
+                  ${cell.span}`}
               >
-                <div className={`w-10 h-10 rounded-2xl ${cell.light} flex items-center justify-center mb-4`}>
-                  <Icon className={`w-5 h-5 ${cell.iconColor}`} strokeWidth={1.75} />
+                {/* Background grid pattern */}
+                <div className="absolute inset-0 dot-grid opacity-20" />
+
+                <div className={`relative w-10 h-10 rounded-2xl bg-gradient-to-br ${cell.iconGrad} flex items-center justify-center mb-4 shadow-sm`}>
+                  <Icon className="w-5 h-5 text-white" strokeWidth={1.75} />
                 </div>
-                <h3 className="font-display font-bold text-[15px] text-ink mb-2">{cell.title}</h3>
-                <p className="text-[13px] text-ink-muted leading-relaxed">{cell.desc}</p>
+                <h3 className="relative font-display font-bold text-[15px] text-ink mb-2">{cell.title}</h3>
+                <p className="relative text-[13px] text-ink-muted leading-relaxed">{cell.desc}</p>
+
+                {/* Large cell: add a small visual accent */}
+                {cell.large && (
+                  <div className="relative mt-4 flex items-center gap-2">
+                    {["₹", "48", "hrs", "live"].map((t) => (
+                      <span key={t} className="px-2.5 py-1 rounded-lg bg-white/70 border border-black/6 text-[11px] font-bold text-ink-muted shadow-sm">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             );
           })}

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   Megaphone,
@@ -45,14 +45,14 @@ export function DashboardNav({ user, onClose }: DashboardNavProps) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-black/6">
-        <a href="/" className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-[0_2px_8px_rgba(109,40,217,0.3)]">
             <Zap className="w-4 h-4 text-white" strokeWidth={2.5} fill="white" />
           </div>
           <span className="font-display text-[16px] font-extrabold tracking-tight text-ink leading-none">
             Influence<span className="text-brand">X</span>
           </span>
-        </a>
+        </Link>
       </div>
 
       {/* Role badge */}

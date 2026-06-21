@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap, ArrowRight } from "lucide-react";
 
@@ -60,12 +61,12 @@ export function Navbar() {
 
           {/* Right side: CTA + hamburger */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <a
-              href="/login"
+            <Link
+              to="/login"
               className="hidden lg:inline-block text-[13px] font-semibold text-ink/50 hover:text-ink transition-colors"
             >
               Sign in
-            </a>
+            </Link>
             <div className="hidden lg:block w-px h-4 bg-black/10" />
             <a href="#waitlist" className="hidden sm:inline-flex btn-primary py-2 px-4 text-[13px]">
               Get Early Access
@@ -119,9 +120,9 @@ export function Navbar() {
                   Get Early Access — Free
                   <ArrowRight className="w-4 h-4" />
                 </a>
-                <a href="/login" onClick={() => setOpen(false)} className="btn-outline w-full">
+                <Link to="/login" onClick={() => setOpen(false)} className="btn-outline w-full">
                   Sign in
-                </a>
+                </Link>
               </div>
             </div>
           </motion.div>

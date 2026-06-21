@@ -44,14 +44,14 @@ export function LoginPage() {
         <div className="absolute top-1/2 right-8 w-32 h-32 rounded-full bg-violet-400/20 -translate-y-1/2" />
 
         <div className="relative">
-          <a href="/" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-[10px] bg-white/15 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" strokeWidth={2.5} fill="white" />
             </div>
             <span className="font-display text-[18px] font-extrabold tracking-tight text-white leading-none">
               InfluenceX
             </span>
-          </a>
+          </Link>
         </div>
 
         <div className="relative space-y-8">

@@ -60,12 +60,12 @@ export function RegisterPage() {
         <div className="absolute -bottom-16 -left-16 w-72 h-72 rounded-full bg-white/5" />
 
         <div className="relative">
-          <a href="/" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-[10px] bg-white/15 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" strokeWidth={2.5} fill="white" />
             </div>
             <span className="font-display text-[18px] font-extrabold tracking-tight text-white">InfluenceX</span>
-          </a>
+          </Link>
         </div>
 
         <div className="relative space-y-6">

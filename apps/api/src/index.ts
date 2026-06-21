@@ -11,6 +11,7 @@ import waitlistRoutes from "./routes/waitlist.js";
 import campaignRoutes from "./routes/campaigns.js";
 import influencerRoutes from "./routes/influencers.js";
 import hireRoutes from "./routes/hires.js";
+import adminRoutes from "./routes/admin.js";
 import { sendError } from "./utils/response.js";
 
 const fastify = Fastify({
@@ -50,6 +51,7 @@ async function bootstrap() {
   await fastify.register(campaignRoutes, { prefix: "/api/v1/campaigns" });
   await fastify.register(influencerRoutes, { prefix: "/api/v1/influencers" });
   await fastify.register(hireRoutes, { prefix: "/api/v1/hires" });
+  await fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
 
   fastify.setErrorHandler((error: { statusCode?: number; message: string }, _request, reply) => {
     fastify.log.error(error);

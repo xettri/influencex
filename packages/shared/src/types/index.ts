@@ -8,6 +8,8 @@ export type ApplicationStatus = "PENDING" | "SHORTLISTED" | "APPROVED" | "REJECT
 
 export type PlatformName = "INSTAGRAM" | "YOUTUBE" | "TIKTOK" | "TWITTER" | "LINKEDIN" | "PINTEREST";
 
+export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "FAILED";
+
 export type PaymentStatus = "PENDING" | "LOCKED" | "RELEASED" | "DISPUTED" | "REFUNDED";
 
 export type DirectHireStatus = "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "DECLINED" | "CANCELLED";
@@ -44,6 +46,10 @@ export interface Platform {
   handle: string;
   followers: number;
   verified: boolean;
+  verificationCode: string | null;
+  verificationStatus: VerificationStatus;
+  verifiedAt: string | null;
+  createdAt: string;
 }
 
 export interface InfluencerProfile {

@@ -1,6 +1,8 @@
 // In-memory mock database — mutated by mock-handler for stateful interactions.
 // Resets on page refresh (acceptable for demo purposes).
 
+import type { VerificationStatus } from "@influencex/shared";
+
 export const MOCK_USERS = {
   "mock-user-brand-001": {
     id: "mock-user-brand-001",
@@ -14,11 +16,18 @@ export const MOCK_USERS = {
     role: "INFLUENCER" as const,
     createdAt: "2025-01-20T10:00:00Z",
   },
+  "mock-user-admin-001": {
+    id: "mock-user-admin-001",
+    email: "admin@influencex.com",
+    role: "ADMIN" as const,
+    createdAt: "2025-01-01T10:00:00Z",
+  },
 };
 
 export const DEMO_CREDENTIALS: Record<string, { userId: string; password: string }> = {
   "brand@demo.com": { userId: "mock-user-brand-001", password: "demo123" },
   "creator@demo.com": { userId: "mock-user-creator-001", password: "demo123" },
+  "admin@influencex.com": { userId: "mock-user-admin-001", password: "demo123" },
 };
 
 // ── Influencer directory (visible to all) ────────────────────────────────────
@@ -254,8 +263,28 @@ export const db = {
     profileCompleted: true,
     verified: false,
     platforms: [
-      { id: "plat-001", name: "INSTAGRAM" as const, handle: "priya.sharma", followers: 125000, verified: false },
-      { id: "plat-002", name: "YOUTUBE" as const, handle: "PriyaSharmaVlogs", followers: 45000, verified: false },
+      {
+        id: "plat-001",
+        name: "INSTAGRAM" as const,
+        handle: "priya.sharma",
+        followers: 125000,
+        verified: false,
+        verificationCode: "IFX-A3KM9X",
+        verificationStatus: "UNVERIFIED" as VerificationStatus,
+        verifiedAt: null as string | null,
+        createdAt: "2025-01-20T12:00:00Z",
+      },
+      {
+        id: "plat-002",
+        name: "YOUTUBE" as const,
+        handle: "PriyaSharmaVlogs",
+        followers: 45000,
+        verified: false,
+        verificationCode: "IFX-B7YP2Q",
+        verificationStatus: "PENDING" as VerificationStatus,
+        verifiedAt: null as string | null,
+        createdAt: "2025-01-20T12:05:00Z",
+      },
     ],
     _count: { applications: 2, directHires: 1 },
     createdAt: "2025-01-20T10:00:00Z",

@@ -27,6 +27,13 @@ function mockId() {
   return `mock-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
+function mockVerifCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "IFX-";
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
 export async function mockRequest<T>(
   path: string,
   opts: RequestInit,
@@ -183,10 +190,31 @@ export async function mockRequest<T>(
   if (method === "POST" && pathname === "/api/v1/influencers/me/platforms") {
     const existing = db.influencerProfile.platforms.find((p) => p.name === body?.name);
     if (existing) throw mkError(409, "You already have this platform connected");
-    const newPlatform = { id: mockId(), name: body?.name as "INSTAGRAM", handle: String(body?.handle ?? ""), followers: Number(body?.followers ?? 0), verified: false };
+    const newPlatform = {
+      id: mockId(),
+      name: body?.name as "INSTAGRAM",
+      handle: String(body?.handle ?? ""),
+      followers: Number(body?.followers ?? 0),
+      verified: false,
+      verificationCode: mockVerifCode(),
+      verificationStatus: "UNVERIFIED" as import("@influencex/shared").VerificationStatus,
+      verifiedAt: null as string | null,
+      createdAt: new Date().toISOString(),
+    };
     db.influencerProfile.platforms.push(newPlatform);
     db.influencerProfile.followersCount = db.influencerProfile.platforms.reduce((s, p) => s + p.followers, 0);
     db.influencerProfile.profileCompleted = true;
+    return db.influencerProfile as T;
+  }
+
+  // Request verify — must come before deletePlatMatch
+  const requestVerifyMatch = pathname.match(/^\/api\/v1\/influencers\/me\/platforms\/([^/]+)\/request-verify$/);
+  if (method === "POST" && requestVerifyMatch) {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+    const platform = db.influencerProfile.platforms.find((p) => p.id === requestVerifyMatch[1]);
+    if (!platform) throw mkError(404, "Platform not found");
+    if (platform.verificationStatus === "VERIFIED") throw mkError(400, "Platform is already verified");
+    platform.verificationStatus = "PENDING";
     return db.influencerProfile as T;
   }
 
@@ -255,6 +283,40 @@ export async function mockRequest<T>(
     const hire = db.hires.find((h) => h.id === hireMatch[1]);
     if (!hire) throw mkError(404, "Hire not found");
     return hire as T;
+  }
+
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+
+  if (method === "GET" && pathname === "/api/v1/admin/verifications") {
+    if (!user || user.role !== "ADMIN") throw mkError(403, "Admin access required");
+    const pending = db.influencerProfile.platforms
+      .filter((p) => p.verificationStatus === "PENDING")
+      .map((p) => ({
+        ...p,
+        influencer: {
+          id: db.influencerProfile.id,
+          displayName: db.influencerProfile.displayName,
+          avatar: db.influencerProfile.avatar,
+          user: { email: "creator@demo.com" },
+        },
+      }));
+    return pending as T;
+  }
+
+  const adminVerifyMatch = pathname.match(/^\/api\/v1\/admin\/platforms\/([^/]+)\/(verify|fail)$/);
+  if (method === "PATCH" && adminVerifyMatch) {
+    if (!user || user.role !== "ADMIN") throw mkError(403, "Admin access required");
+    const [, platId, action] = adminVerifyMatch;
+    const platform = db.influencerProfile.platforms.find((p) => p.id === platId);
+    if (!platform) throw mkError(404, "Platform not found");
+    if (action === "verify") {
+      platform.verified = true;
+      platform.verificationStatus = "VERIFIED";
+      platform.verifiedAt = new Date().toISOString();
+    } else {
+      platform.verificationStatus = "FAILED";
+    }
+    return platform as T;
   }
 
   // ── MISC ──────────────────────────────────────────────────────────────────

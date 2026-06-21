@@ -66,14 +66,25 @@ model InfluencerProfile {
   updatedAt        DateTime              @updatedAt
 }
 
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  FAILED
+}
+
 model Platform {
-  id           String            @id @default(cuid())
-  influencerId String
-  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
-  name         PlatformName
-  handle       String
-  followers    Int               @default(0)
-  verified     Boolean           @default(false)
+  id                 String             @id @default(cuid())
+  influencerId       String
+  influencer         InfluencerProfile  @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  name               PlatformName
+  handle             String
+  followers          Int                @default(0)
+  verified           Boolean            @default(false)
+  verificationCode   String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  createdAt          DateTime           @default(now())
 
   @@unique([influencerId, name])
 }

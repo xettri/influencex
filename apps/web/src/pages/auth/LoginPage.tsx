@@ -30,7 +30,12 @@ export function LoginPage() {
     try {
       await login(form.email, form.password);
       toast.success("Welcome back!");
-      navigate(from, { replace: true });
+      const loggedInUser = useAuthStore.getState().user;
+      if (loggedInUser?.role === "ADMIN") {
+        navigate("/admin/verifications", { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch {}
   };
 
@@ -136,6 +141,13 @@ export function LoginPage() {
                   Creator Account
                 </button>
               </div>
+              <button
+                  type="button"
+                  onClick={() => setForm({ email: "admin@influencex.com", password: "demo123" })}
+                  className="w-full py-2 px-3 rounded-lg bg-white border border-amber-200 text-[12px] font-bold text-amber-800 hover:bg-amber-100 transition-colors"
+                >
+                  Admin Account
+                </button>
               <p className="text-[10px] text-amber-600 mt-2 text-center">Password: <span className="font-bold">demo123</span> · No backend needed</p>
             </div>
           )}

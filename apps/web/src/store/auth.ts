@@ -5,7 +5,7 @@ import { api, updateApiToken, initApiClient } from "../lib/api";
 export type AuthUser = {
   id: string;
   email: string;
-  role: "BRAND" | "INFLUENCER";
+  role: "BRAND" | "INFLUENCER" | "ADMIN";
   createdAt?: string;
 };
 

@@ -40,6 +40,9 @@ const HiresPage = lazy(() =>
 const ProfileSetupPage = lazy(() =>
   import("@/pages/dashboard/ProfileSetupPage").then((m) => ({ default: m.ProfileSetupPage }))
 );
+const AdminVerificationsPage = lazy(() =>
+  import("@/pages/admin/AdminVerificationsPage").then((m) => ({ default: m.AdminVerificationsPage }))
+);
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
@@ -94,6 +97,10 @@ export default function App() {
             <Route
               path="/dashboard/*"
               element={<DashboardShell><DashboardPage /></DashboardShell>}
+            />
+            <Route
+              path="/admin/verifications"
+              element={<DashboardShell><AdminVerificationsPage /></DashboardShell>}
             />
 
             <Route path="*" element={<Navigate to="/" replace />} />

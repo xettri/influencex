@@ -11,6 +11,7 @@ import {
   DollarSign,
   Briefcase,
   UserCircle,
+  ShieldCheck,
 } from "lucide-react";
 import type { AuthUser } from "@/store/auth";
 
@@ -33,13 +34,19 @@ const creatorLinks = [
   { icon: Settings, label: "Settings", to: "/dashboard/settings" },
 ];
 
+const adminLinks = [
+  { icon: ShieldCheck, label: "Verifications", to: "/admin/verifications" },
+  { icon: Users, label: "Influencers", to: "/dashboard/influencers" },
+  { icon: Megaphone, label: "Campaigns", to: "/dashboard/campaigns" },
+];
+
 interface DashboardNavProps {
   user: AuthUser;
   onClose?: () => void;
 }
 
 export function DashboardNav({ user, onClose }: DashboardNavProps) {
-  const links = user.role === "BRAND" ? brandLinks : creatorLinks;
+  const links = user.role === "BRAND" ? brandLinks : user.role === "ADMIN" ? adminLinks : creatorLinks;
 
   return (
     <div className="flex flex-col h-full">
@@ -60,9 +67,11 @@ export function DashboardNav({ user, onClose }: DashboardNavProps) {
         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${
           user.role === "BRAND"
             ? "bg-violet-50 border border-violet-200 text-violet-700"
+            : user.role === "ADMIN"
+            ? "bg-rose-50 border border-rose-200 text-rose-700"
             : "bg-emerald-50 border border-emerald-200 text-emerald-700"
         }`}>
-          {user.role === "BRAND" ? "Brand Account" : "Creator Account"}
+          {user.role === "BRAND" ? "Brand Account" : user.role === "ADMIN" ? "Admin" : "Creator Account"}
         </span>
       </div>
 

@@ -6,6 +6,15 @@ import {
 } from "@influencex/shared";
 import { sendSuccess, sendPaginated, sendError } from "../utils/response.js";
 
+const VERIF_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function generateVerifCode(): string {
+  let code = "IFX-";
+  for (let i = 0; i < 6; i++) {
+    code += VERIF_CHARS[Math.floor(Math.random() * VERIF_CHARS.length)];
+  }
+  return code;
+}
+
 const influencerRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /influencers — public directory with filters
@@ -158,7 +167,7 @@ const influencerRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const platform = await fastify.prisma.platform.create({
-        data: { ...result.data, influencerId: profile.id },
+        data: { ...result.data, influencerId: profile.id, verificationCode: generateVerifCode() },
       });
 
       // Recompute total follower count and mark profile as complete
@@ -176,6 +185,29 @@ const influencerRoutes: FastifyPluginAsync = async (fastify) => {
       }
       throw err;
     }
+  });
+
+  // POST /influencers/me/platforms/:platformId/request-verify — request verification
+  fastify.post("/me/platforms/:platformId/request-verify", { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { sub } = request.user;
+    const { platformId } = request.params as { platformId: string };
+
+    const profile = await fastify.prisma.influencerProfile.findUnique({ where: { userId: sub } });
+    if (!profile) return sendError(reply, 404, "Influencer profile not found", "NOT_FOUND");
+
+    const platform = await fastify.prisma.platform.findFirst({
+      where: { id: platformId, influencerId: profile.id },
+    });
+    if (!platform) return sendError(reply, 404, "Platform not found", "NOT_FOUND");
+    if (platform.verificationStatus === "VERIFIED") {
+      return sendError(reply, 400, "Platform is already verified", "ALREADY_VERIFIED");
+    }
+
+    const updated = await fastify.prisma.platform.update({
+      where: { id: platformId },
+      data: { verificationStatus: "PENDING" },
+    });
+    return sendSuccess(reply, updated, 200, "Verification requested");
   });
 
   // DELETE /influencers/me/platforms/:platformId — remove a platform

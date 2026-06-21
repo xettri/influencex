@@ -54,6 +54,16 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     if (result.success) await authService.logout(result.data.refreshToken);
     return sendSuccess(reply, null, 200, "Logged out successfully");
   });
+
+  fastify.get("/me", { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { sub } = request.user;
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: sub },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
+    if (!user) return sendError(reply, 404, "User not found", "NOT_FOUND");
+    return sendSuccess(reply, user);
+  });
 };
 
 export default authRoutes;

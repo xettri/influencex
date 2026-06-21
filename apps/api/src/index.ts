@@ -5,8 +5,10 @@ import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
 
 import prismaPlugin from "./plugins/prisma.js";
+import authGuard from "./plugins/auth-guard.js";
 import authRoutes from "./routes/auth.js";
 import waitlistRoutes from "./routes/waitlist.js";
+import campaignRoutes from "./routes/campaigns.js";
 import { sendError } from "./utils/response.js";
 
 const fastify = Fastify({
@@ -37,11 +39,13 @@ async function bootstrap() {
   });
 
   await fastify.register(prismaPlugin);
+  await fastify.register(authGuard);
 
   fastify.get("/health", async () => ({ status: "ok", timestamp: new Date().toISOString() }));
 
   await fastify.register(authRoutes, { prefix: "/api/v1/auth" });
   await fastify.register(waitlistRoutes, { prefix: "/api/v1/waitlist" });
+  await fastify.register(campaignRoutes, { prefix: "/api/v1/campaigns" });
 
   fastify.setErrorHandler((error: { statusCode?: number; message: string }, _request, reply) => {
     fastify.log.error(error);

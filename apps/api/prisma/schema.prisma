@@ -28,36 +28,42 @@ enum Role {
 }
 
 model BrandProfile {
-  id          String     @id @default(cuid())
-  userId      String     @unique
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   logo        String?
   description String?
   website     String?
   industry    String?
-  verified    Boolean    @default(false)
+  verified    Boolean      @default(false)
   campaigns   Campaign[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  directHires DirectHire[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model InfluencerProfile {
-  id              String                @id @default(cuid())
-  userId          String                @unique
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  displayName     String
-  avatar          String?
-  bio             String?
-  niche           String[]
-  followersCount  Int                   @default(0)
-  engagementRate  Float                 @default(0)
-  verified        Boolean               @default(false)
-  platforms       Platform[]
-  applications    CampaignApplication[]
-  invitations     CampaignInvitation[]
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id               String                @id @default(cuid())
+  userId           String                @unique
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName      String
+  avatar           String?
+  bio              String?
+  niche            String[]
+  location         String?
+  followersCount   Int                   @default(0)
+  engagementRate   Float                 @default(0)
+  rateCard         Json?
+  minRate          Float?
+  profileCompleted Boolean               @default(false)
+  verified         Boolean               @default(false)
+  platforms        Platform[]
+  applications     CampaignApplication[]
+  invitations      CampaignInvitation[]
+  directHires      DirectHire[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 }
 
 model Platform {
@@ -155,6 +161,32 @@ enum InvitationStatus {
   PENDING
   ACCEPTED
   DECLINED
+}
+
+model DirectHire {
+  id           String           @id @default(cuid())
+  brandId      String
+  brand        BrandProfile     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  influencerId String
+  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  budget       Float
+  deliverables String
+  deadline     DateTime?
+  status       DirectHireStatus @default(PENDING)
+  brandMessage String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+enum DirectHireStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  CANCELLED
 }
 
 model Payment {

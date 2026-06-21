@@ -10,6 +10,15 @@ export type PlatformName = "INSTAGRAM" | "YOUTUBE" | "TIKTOK" | "TWITTER" | "LIN
 
 export type PaymentStatus = "PENDING" | "LOCKED" | "RELEASED" | "DISPUTED" | "REFUNDED";
 
+export type DirectHireStatus = "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "DECLINED" | "CANCELLED";
+
+export interface RateCard {
+  perPost?: number;
+  perReel?: number;
+  perVideo?: number;
+  perStory?: number;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -25,6 +34,7 @@ export interface BrandProfile {
   description?: string;
   website?: string;
   industry?: string;
+  verified: boolean;
   createdAt: string;
 }
 
@@ -43,9 +53,14 @@ export interface InfluencerProfile {
   avatar?: string;
   bio?: string;
   niche: string[];
+  location?: string;
   platforms: Platform[];
   followersCount: number;
   engagementRate: number;
+  rateCard?: RateCard;
+  minRate?: number;
+  profileCompleted: boolean;
+  verified: boolean;
   createdAt: string;
 }
 
@@ -79,6 +94,20 @@ export interface CampaignApplication {
   influencerId: string;
   status: ApplicationStatus;
   pitch?: string;
+  createdAt: string;
+}
+
+export interface DirectHire {
+  id: string;
+  brandId: string;
+  influencerId: string;
+  title: string;
+  description: string;
+  budget: number;
+  deliverables: string;
+  deadline?: string;
+  status: DirectHireStatus;
+  brandMessage?: string;
   createdAt: string;
 }
 

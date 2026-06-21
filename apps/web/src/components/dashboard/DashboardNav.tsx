@@ -9,14 +9,16 @@ import {
   Search,
   Bookmark,
   DollarSign,
+  Briefcase,
+  UserCircle,
 } from "lucide-react";
 import type { AuthUser } from "@/store/auth";
 
 const brandLinks = [
   { icon: LayoutDashboard, label: "Overview", to: "/dashboard" },
   { icon: Megaphone, label: "My Campaigns", to: "/dashboard/campaigns" },
-  { icon: Users, label: "Applications", to: "/dashboard/applications" },
-  { icon: DollarSign, label: "Payments", to: "/dashboard/payments" },
+  { icon: Users, label: "Find Creators", to: "/dashboard/influencers" },
+  { icon: Briefcase, label: "Hire Requests", to: "/dashboard/hires" },
   { icon: BarChart3, label: "Analytics", to: "/dashboard/analytics" },
   { icon: Settings, label: "Settings", to: "/dashboard/settings" },
 ];
@@ -25,8 +27,9 @@ const creatorLinks = [
   { icon: LayoutDashboard, label: "Overview", to: "/dashboard" },
   { icon: Search, label: "Browse Campaigns", to: "/dashboard/explore" },
   { icon: Bookmark, label: "My Applications", to: "/dashboard/applications" },
+  { icon: Briefcase, label: "Hire Requests", to: "/dashboard/hires" },
+  { icon: UserCircle, label: "My Profile", to: "/dashboard/profile" },
   { icon: DollarSign, label: "Earnings", to: "/dashboard/earnings" },
-  { icon: BarChart3, label: "Analytics", to: "/dashboard/analytics" },
   { icon: Settings, label: "Settings", to: "/dashboard/settings" },
 ];
 

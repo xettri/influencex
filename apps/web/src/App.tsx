@@ -25,6 +25,21 @@ const CreateCampaignPage = lazy(() =>
 const ExplorePage = lazy(() =>
   import("@/pages/dashboard/ExplorePage").then((m) => ({ default: m.ExplorePage }))
 );
+const InfluencersPage = lazy(() =>
+  import("@/pages/dashboard/InfluencersPage").then((m) => ({ default: m.InfluencersPage }))
+);
+const InfluencerProfilePage = lazy(() =>
+  import("@/pages/dashboard/InfluencerProfilePage").then((m) => ({ default: m.InfluencerProfilePage }))
+);
+const HirePage = lazy(() =>
+  import("@/pages/dashboard/HirePage").then((m) => ({ default: m.HirePage }))
+);
+const HiresPage = lazy(() =>
+  import("@/pages/dashboard/HiresPage").then((m) => ({ default: m.HiresPage }))
+);
+const ProfileSetupPage = lazy(() =>
+  import("@/pages/dashboard/ProfileSetupPage").then((m) => ({ default: m.ProfileSetupPage }))
+);
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
@@ -55,6 +70,26 @@ export default function App() {
             <Route
               path="/dashboard/explore"
               element={<DashboardShell><ExplorePage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/influencers"
+              element={<DashboardShell><InfluencersPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/influencers/:id"
+              element={<DashboardShell><InfluencerProfilePage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/hire/:influencerId"
+              element={<DashboardShell><HirePage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/hires"
+              element={<DashboardShell><HiresPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/profile"
+              element={<DashboardShell><ProfileSetupPage /></DashboardShell>}
             />
             <Route
               path="/dashboard/*"

@@ -9,6 +9,8 @@ import authGuard from "./plugins/auth-guard.js";
 import authRoutes from "./routes/auth.js";
 import waitlistRoutes from "./routes/waitlist.js";
 import campaignRoutes from "./routes/campaigns.js";
+import influencerRoutes from "./routes/influencers.js";
+import hireRoutes from "./routes/hires.js";
 import { sendError } from "./utils/response.js";
 
 const fastify = Fastify({
@@ -46,6 +48,8 @@ async function bootstrap() {
   await fastify.register(authRoutes, { prefix: "/api/v1/auth" });
   await fastify.register(waitlistRoutes, { prefix: "/api/v1/waitlist" });
   await fastify.register(campaignRoutes, { prefix: "/api/v1/campaigns" });
+  await fastify.register(influencerRoutes, { prefix: "/api/v1/influencers" });
+  await fastify.register(hireRoutes, { prefix: "/api/v1/hires" });
 
   fastify.setErrorHandler((error: { statusCode?: number; message: string }, _request, reply) => {
     fastify.log.error(error);

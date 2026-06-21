@@ -61,7 +61,7 @@ export function Navbar() {
           {/* Right side: CTA + hamburger */}
           <div className="flex items-center gap-2.5 shrink-0">
             <a
-              href="#waitlist"
+              href="/login"
               className="hidden lg:inline-block text-[13px] font-semibold text-ink/50 hover:text-ink transition-colors"
             >
               Sign in
@@ -119,7 +119,7 @@ export function Navbar() {
                   Get Early Access — Free
                   <ArrowRight className="w-4 h-4" />
                 </a>
-                <a href="#waitlist" onClick={() => setOpen(false)} className="btn-outline w-full">
+                <a href="/login" onClick={() => setOpen(false)} className="btn-outline w-full">
                   Sign in
                 </a>
               </div>

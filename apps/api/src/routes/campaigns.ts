@@ -60,6 +60,26 @@ const campaignRoutes: FastifyPluginAsync = async (fastify) => {
     return sendSuccess(reply, campaigns);
   });
 
+  // GET /campaigns/applications/my — creator's own applications (must be before /:id)
+  fastify.get("/applications/my", { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { sub } = request.user;
+    const influencer = await fastify.prisma.influencerProfile.findUnique({ where: { userId: sub } });
+    if (!influencer) return sendError(reply, 403, "Influencer profile required", "FORBIDDEN");
+
+    const applications = await fastify.prisma.campaignApplication.findMany({
+      where: { influencerId: influencer.id },
+      include: {
+        campaign: {
+          include: {
+            brand: { select: { name: true, logo: true, verified: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return sendSuccess(reply, applications);
+  });
+
   // GET /campaigns/:id — single campaign
   fastify.get("/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -126,6 +146,71 @@ const campaignRoutes: FastifyPluginAsync = async (fastify) => {
       },
     });
     return sendSuccess(reply, updated);
+  });
+
+  // GET /campaigns/:id/applications — brand sees who applied
+  fastify.get("/:id/applications", { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { sub } = request.user;
+    const { id } = request.params as { id: string };
+
+    const brand = await fastify.prisma.brandProfile.findUnique({ where: { userId: sub } });
+    if (!brand) return sendError(reply, 403, "Brand profile required", "FORBIDDEN");
+
+    const campaign = await fastify.prisma.campaign.findUnique({ where: { id } });
+    if (!campaign) return sendError(reply, 404, "Campaign not found", "NOT_FOUND");
+    if (campaign.brandId !== brand.id) return sendError(reply, 403, "Not authorized", "FORBIDDEN");
+
+    const applications = await fastify.prisma.campaignApplication.findMany({
+      where: { campaignId: id },
+      include: {
+        influencer: {
+          select: {
+            id: true,
+            displayName: true,
+            avatar: true,
+            followersCount: true,
+            niche: true,
+            verified: true,
+            platforms: { select: { id: true, name: true, handle: true, followers: true, verified: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    return sendSuccess(reply, applications);
+  });
+
+  // PATCH /campaigns/:id/applications/:appId/status — brand updates application status
+  fastify.patch("/:id/applications/:appId/status", { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    const { sub } = request.user;
+    const { id, appId } = request.params as { id: string; appId: string };
+
+    const brand = await fastify.prisma.brandProfile.findUnique({ where: { userId: sub } });
+    if (!brand) return sendError(reply, 403, "Brand profile required", "FORBIDDEN");
+
+    const campaign = await fastify.prisma.campaign.findUnique({ where: { id } });
+    if (!campaign || campaign.brandId !== brand.id) return sendError(reply, 403, "Not authorized", "FORBIDDEN");
+
+    const { status } = request.body as { status: string };
+    const validStatuses = ["PENDING", "SHORTLISTED", "APPROVED", "REJECTED"];
+    if (!validStatuses.includes(status)) {
+      return sendError(reply, 400, "Invalid status", "VALIDATION_ERROR");
+    }
+
+    try {
+      const application = await fastify.prisma.campaignApplication.update({
+        where: { id: appId },
+        data: { status: status as "PENDING" | "SHORTLISTED" | "APPROVED" | "REJECTED" },
+        include: {
+          influencer: {
+            select: { id: true, displayName: true, avatar: true, followersCount: true, niche: true, verified: true },
+          },
+        },
+      });
+      return sendSuccess(reply, application);
+    } catch {
+      return sendError(reply, 404, "Application not found", "NOT_FOUND");
+    }
   });
 
   // POST /campaigns/:id/apply — apply to campaign (influencer only)

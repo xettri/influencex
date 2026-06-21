@@ -1,7 +1,7 @@
 // In-memory mock database — mutated by mock-handler for stateful interactions.
 // Resets on page refresh (acceptable for demo purposes).
 
-import type { VerificationStatus } from "@influencex/shared";
+import type { VerificationStatus, ApplicationStatus } from "@influencex/shared";
 
 export const MOCK_USERS = {
   "mock-user-brand-001": {
@@ -234,7 +234,7 @@ export const db = {
       id: "mock-app-001",
       campaignId: "mock-camp-001",
       influencerId: "mock-influencer-001",
-      status: "PENDING",
+      status: "PENDING" as ApplicationStatus,
       pitch: "I would love to collaborate on the Summer Collection campaign! Fashion is my niche and I have a highly engaged audience in Mumbai. My Instagram reels average 15K+ views.",
       createdAt: "2025-06-20T10:00:00Z",
       campaign: {
@@ -243,6 +243,98 @@ export const db = {
         brand: { name: "Zara Lifestyle", logo: null, verified: true },
         budget: 200000,
         budgetType: "FLAT_FEE",
+      },
+      influencer: {
+        id: "mock-influencer-001",
+        displayName: "Priya Sharma",
+        avatar: null as string | null,
+        followersCount: 170000,
+        niche: ["Fashion", "Lifestyle", "Beauty"],
+        platforms: [
+          { id: "plat-001", name: "INSTAGRAM" as const, handle: "priya.sharma", followers: 125000 },
+          { id: "plat-002", name: "YOUTUBE" as const, handle: "PriyaSharmaVlogs", followers: 45000 },
+        ],
+        verified: false,
+      },
+    },
+    {
+      id: "mock-app-002",
+      campaignId: "mock-camp-001",
+      influencerId: "mock-influencer-002",
+      status: "SHORTLISTED" as ApplicationStatus,
+      pitch: "My audience is highly engaged with fashion and lifestyle content. I've partnered with multiple apparel brands and can deliver authentic storytelling that drives real conversions.",
+      createdAt: "2025-06-19T08:00:00Z",
+      campaign: {
+        id: "mock-camp-001",
+        title: "Summer Fashion Collection 2025",
+        brand: { name: "Zara Lifestyle", logo: null, verified: true },
+        budget: 200000,
+        budgetType: "FLAT_FEE",
+      },
+      influencer: {
+        id: "mock-influencer-002",
+        displayName: "Rohit Mehta",
+        avatar: null as string | null,
+        followersCount: 280000,
+        niche: ["Tech", "Gaming", "Reviews"],
+        platforms: [
+          { id: "plat-003", name: "YOUTUBE" as const, handle: "RohitTechReviews", followers: 210000 },
+          { id: "plat-004", name: "INSTAGRAM" as const, handle: "rohit.techie", followers: 70000 },
+        ],
+        verified: true,
+      },
+    },
+    {
+      id: "mock-app-003",
+      campaignId: "mock-camp-001",
+      influencerId: "mock-influencer-003",
+      status: "APPROVED" as ApplicationStatus,
+      pitch: "Fashion and beauty content is what I do best. 450K+ followers across platforms, 5%+ engagement rate, and a track record of successful brand campaigns. Let's create something stunning together!",
+      createdAt: "2025-06-18T14:30:00Z",
+      campaign: {
+        id: "mock-camp-001",
+        title: "Summer Fashion Collection 2025",
+        brand: { name: "Zara Lifestyle", logo: null, verified: true },
+        budget: 200000,
+        budgetType: "FLAT_FEE",
+      },
+      influencer: {
+        id: "mock-influencer-003",
+        displayName: "Aisha Khan",
+        avatar: null as string | null,
+        followersCount: 450000,
+        niche: ["Beauty", "Skincare", "Wellness"],
+        platforms: [
+          { id: "plat-005", name: "INSTAGRAM" as const, handle: "aisha.beauty", followers: 380000 },
+          { id: "plat-006", name: "YOUTUBE" as const, handle: "AishaKhanBeauty", followers: 70000 },
+        ],
+        verified: true,
+      },
+    },
+    {
+      id: "mock-app-004",
+      campaignId: "mock-camp-002",
+      influencerId: "mock-influencer-004",
+      status: "PENDING" as ApplicationStatus,
+      pitch: "Winter fashion is my favourite. I travel across India and document authentic styling in diverse locations. My audience trusts my fashion picks.",
+      createdAt: "2025-06-17T09:00:00Z",
+      campaign: {
+        id: "mock-camp-002",
+        title: "Winter Wardrobe Festive Campaign",
+        brand: { name: "Zara Lifestyle", logo: null, verified: true },
+        budget: 350000,
+        budgetType: "MIXED",
+      },
+      influencer: {
+        id: "mock-influencer-004",
+        displayName: "Vikram Nair",
+        avatar: null as string | null,
+        followersCount: 89000,
+        niche: ["Travel", "Adventure", "Photography"],
+        platforms: [
+          { id: "plat-007", name: "INSTAGRAM" as const, handle: "vikram.travels", followers: 72000 },
+        ],
+        verified: true,
       },
     },
   ],

@@ -210,12 +210,12 @@ export function BrandDashboard() {
               const Icon = statusIcons[campaign.status];
               return (
                 <div key={campaign.id} className="flex items-center gap-4 px-6 py-4 hover:bg-black/[0.02] transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13.5px] font-semibold text-ink truncate">{campaign.title}</p>
+                  <Link to={`/dashboard/campaigns/${campaign.id}`} className="flex-1 min-w-0 group">
+                    <p className="text-[13.5px] font-semibold text-ink truncate group-hover:text-brand transition-colors">{campaign.title}</p>
                     <p className="text-[12px] text-ink-muted">
                       {campaign._count?.applications ?? 0} applicants · ₹{campaign.budget.toLocaleString("en-IN")} {campaign.budgetType.replace("_", " ")}
                     </p>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold ${statusStyles[campaign.status]}`}>
                       <Icon className="w-3 h-3" strokeWidth={2} />

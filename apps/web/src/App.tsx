@@ -40,6 +40,15 @@ const HiresPage = lazy(() =>
 const ProfileSetupPage = lazy(() =>
   import("@/pages/dashboard/ProfileSetupPage").then((m) => ({ default: m.ProfileSetupPage }))
 );
+const CampaignDetailPage = lazy(() =>
+  import("@/pages/dashboard/CampaignDetailPage").then((m) => ({ default: m.CampaignDetailPage }))
+);
+const CampaignsPage = lazy(() =>
+  import("@/pages/dashboard/CampaignsPage").then((m) => ({ default: m.CampaignsPage }))
+);
+const ApplicationsPage = lazy(() =>
+  import("@/pages/dashboard/ApplicationsPage").then((m) => ({ default: m.ApplicationsPage }))
+);
 const AdminVerificationsPage = lazy(() =>
   import("@/pages/admin/AdminVerificationsPage").then((m) => ({ default: m.AdminVerificationsPage }))
 );
@@ -69,6 +78,18 @@ export default function App() {
             <Route
               path="/dashboard/campaigns/new"
               element={<DashboardShell><CreateCampaignPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/campaigns"
+              element={<DashboardShell><CampaignsPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/campaigns/:id"
+              element={<DashboardShell><CampaignDetailPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/applications"
+              element={<DashboardShell><ApplicationsPage /></DashboardShell>}
             />
             <Route
               path="/dashboard/explore"

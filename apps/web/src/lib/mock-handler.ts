@@ -122,6 +122,33 @@ export async function mockRequest<T>(
     return newCamp as T;
   }
 
+  // Creator's own applications — must come before the /:id matcher
+  if (method === "GET" && pathname === "/api/v1/campaigns/applications/my") {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+    const mine = db.applications.filter((a) => a.influencerId === "mock-influencer-001");
+    return mine as T;
+  }
+
+  // Brand views applications for a campaign
+  const campApplicationsMatch = pathname.match(/^\/api\/v1\/campaigns\/([^/]+)\/applications$/);
+  if (method === "GET" && campApplicationsMatch) {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    const campId = campApplicationsMatch[1];
+    const apps = db.applications.filter((a) => a.campaignId === campId);
+    return apps as T;
+  }
+
+  // Brand updates application status
+  const campAppStatusMatch = pathname.match(/^\/api\/v1\/campaigns\/([^/]+)\/applications\/([^/]+)\/status$/);
+  if (method === "PATCH" && campAppStatusMatch) {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    const appId = campAppStatusMatch[2];
+    const app = db.applications.find((a) => a.id === appId);
+    if (!app) throw mkError(404, "Application not found");
+    app.status = String(body?.status ?? app.status) as typeof app.status;
+    return app as T;
+  }
+
   // Apply to campaign — must come before the single-campaign matcher
   const applyMatch = pathname.match(/^\/api\/v1\/campaigns\/([^/]+)\/apply$/);
   if (method === "POST" && applyMatch) {

@@ -426,6 +426,109 @@ export async function mockRequest<T>(
     return platform as T;
   }
 
+  // ── ANALYTICS ─────────────────────────────────────────────────────────────
+
+  if (method === "GET" && pathname === "/api/v1/analytics/brand") {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+
+    // Compute from live mock data
+    const camps = db.campaigns;
+    const apps = db.applications;
+    const approvedCount = apps.filter((a) => a.status === "APPROVED").length;
+    const activeCamps = camps.filter((c) => c.status === "ACTIVE");
+
+    // Realistic-looking applications over last 30 days
+    const now = Date.now();
+    const byDay: { date: string; count: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now - i * 86_400_000);
+      const dateStr = d.toISOString().slice(0, 10);
+      // Seed with a pattern that looks real
+      const seed = (i * 7 + 13) % 17;
+      byDay.push({ date: dateStr, count: i % 5 === 0 ? seed % 4 : seed % 7 });
+    }
+    // Spike the last few days with actual application count
+    byDay[27].count = 4;
+    byDay[28].count = 3;
+    byDay[29].count = 5;
+
+    const appsByStatus: Record<string, number> = { PENDING: 0, SHORTLISTED: 0, APPROVED: 0, REJECTED: 0 };
+    for (const a of apps) appsByStatus[a.status] = (appsByStatus[a.status] ?? 0) + 1;
+
+    const campsByStatus: Record<string, number> = {};
+    for (const c of camps) campsByStatus[c.status] = (campsByStatus[c.status] ?? 0) + 1;
+
+    const topCampaigns = camps.map((c) => ({
+      id: c.id,
+      title: c.title,
+      applications: apps.filter((a) => a.campaignId === c.id).length,
+      approved: apps.filter((a) => a.campaignId === c.id && a.status === "APPROVED").length,
+      budget: c.budget,
+    })).sort((a, b) => b.applications - a.applications).slice(0, 5);
+
+    return {
+      overview: {
+        totalCampaigns: camps.length,
+        activeCampaigns: activeCamps.length,
+        totalApplications: apps.length,
+        approvedCount,
+        approvalRate: apps.length > 0 ? Math.round((approvedCount / apps.length) * 100) : 0,
+        totalBudgetActive: activeCamps.reduce((s, c) => s + c.budget, 0),
+      },
+      applicationsByStatus: appsByStatus,
+      campaignsByStatus: campsByStatus,
+      applicationsOverTime: byDay,
+      topCampaigns,
+    } as T;
+  }
+
+  if (method === "GET" && pathname === "/api/v1/analytics/creator") {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+
+    const apps = db.applications.filter((a) => a.influencerId === "mock-influencer-001");
+    const approvedCount = apps.filter((a) => a.status === "APPROVED").length;
+
+    const appsByStatus: Record<string, number> = { PENDING: 0, SHORTLISTED: 0, APPROVED: 0, REJECTED: 0 };
+    for (const a of apps) appsByStatus[a.status] = (appsByStatus[a.status] ?? 0) + 1;
+
+    // Activity by month (last 6 months) — realistic pattern
+    const now = new Date();
+    const activityByMonth = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const label = d.toLocaleString("en-IN", { month: "short", year: "2-digit" });
+      const counts = [0, 1, 0, 2, 1, apps.length]; // ramp up to current
+      return { month: label, applications: counts[i] };
+    });
+
+    const earningsPipeline = apps
+      .filter((a) => a.status === "APPROVED" || a.status === "SHORTLISTED")
+      .map((a) => ({
+        campaignId: a.campaignId,
+        title: a.campaign?.title ?? "Campaign",
+        brand: a.campaign?.brand.name ?? "Brand",
+        budget: a.campaign?.budget ?? 0,
+        status: a.status,
+      }));
+
+    const estimatedEarnings = earningsPipeline
+      .filter((e) => e.status === "APPROVED")
+      .reduce((s, e) => s + e.budget * 0.1, 0);
+
+    return {
+      overview: {
+        totalApplications: apps.length,
+        approvedCount,
+        approvalRate: apps.length > 0 ? Math.round((approvedCount / apps.length) * 100) : 0,
+        pendingCount: appsByStatus["PENDING"] ?? 0,
+        estimatedEarnings,
+        directHires: db.hires.filter((h) => h.influencerId === "mock-influencer-001" && ["ACCEPTED", "COMPLETED"].includes(h.status)).length,
+      },
+      applicationsByStatus: appsByStatus,
+      earningsPipeline,
+      activityByMonth,
+    } as T;
+  }
+
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
 
   if (method === "GET" && pathname === "/api/v1/notifications") {

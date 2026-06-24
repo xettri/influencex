@@ -138,6 +138,37 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
+// ── Analytics ────────────────────────────────────────────────────────────────
+
+export interface BrandAnalytics {
+  overview: {
+    totalCampaigns: number;
+    activeCampaigns: number;
+    totalApplications: number;
+    approvedCount: number;
+    approvalRate: number;
+    totalBudgetActive: number;
+  };
+  applicationsByStatus: Record<string, number>;
+  campaignsByStatus: Record<string, number>;
+  applicationsOverTime: { date: string; count: number }[];
+  topCampaigns: { id: string; title: string; applications: number; approved: number; budget: number }[];
+}
+
+export interface CreatorAnalytics {
+  overview: {
+    totalApplications: number;
+    approvedCount: number;
+    approvalRate: number;
+    pendingCount: number;
+    estimatedEarnings: number;
+    directHires: number;
+  };
+  applicationsByStatus: Record<string, number>;
+  earningsPipeline: { campaignId: string; title: string; brand: string; budget: number; status: string }[];
+  activityByMonth: { month: string; applications: number }[];
+}
+
 export type NotificationType =
   | "APPLICATION_RECEIVED"
   | "APPLICATION_SHORTLISTED"

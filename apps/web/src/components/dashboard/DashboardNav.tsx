@@ -12,14 +12,17 @@ import {
   Briefcase,
   UserCircle,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 import type { AuthUser } from "@/store/auth";
+import { useNotificationStore } from "@/store/notifications";
 
 const brandLinks = [
   { icon: LayoutDashboard, label: "Overview", to: "/dashboard" },
   { icon: Megaphone, label: "My Campaigns", to: "/dashboard/campaigns" },
   { icon: Users, label: "Find Creators", to: "/dashboard/influencers" },
   { icon: Briefcase, label: "Hire Requests", to: "/dashboard/hires" },
+  { icon: Bell, label: "Notifications", to: "/dashboard/notifications" },
   { icon: BarChart3, label: "Analytics", to: "/dashboard/analytics" },
   { icon: Settings, label: "Settings", to: "/dashboard/settings" },
 ];
@@ -29,6 +32,7 @@ const creatorLinks = [
   { icon: Search, label: "Browse Campaigns", to: "/dashboard/explore" },
   { icon: Bookmark, label: "My Applications", to: "/dashboard/applications" },
   { icon: Briefcase, label: "Hire Requests", to: "/dashboard/hires" },
+  { icon: Bell, label: "Notifications", to: "/dashboard/notifications" },
   { icon: UserCircle, label: "My Profile", to: "/dashboard/profile" },
   { icon: DollarSign, label: "Earnings", to: "/dashboard/earnings" },
   { icon: Settings, label: "Settings", to: "/dashboard/settings" },
@@ -47,6 +51,7 @@ interface DashboardNavProps {
 
 export function DashboardNav({ user, onClose }: DashboardNavProps) {
   const links = user.role === "BRAND" ? brandLinks : user.role === "ADMIN" ? adminLinks : creatorLinks;
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   return (
     <div className="flex flex-col h-full">
@@ -92,7 +97,12 @@ export function DashboardNav({ user, onClose }: DashboardNavProps) {
             }
           >
             <Icon className="w-4 h-4 shrink-0" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {label === "Notifications" && unreadCount > 0 && (
+              <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-violet-600 text-white text-[9px] font-black px-1 leading-none">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

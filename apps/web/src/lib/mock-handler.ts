@@ -1,5 +1,19 @@
 import { db, MOCK_USERS, MOCK_DIRECTORY, DEMO_CREDENTIALS } from "./mock-db";
-import type { PaginatedResponse } from "@influencex/shared";
+import type { PaginatedResponse, NotificationType } from "@influencex/shared";
+
+function addNotification(userId: string, type: NotificationType, title: string, body: string, link?: string) {
+  const bucket = db.notifications[userId as keyof typeof db.notifications];
+  if (!bucket) return;
+  bucket.unshift({
+    id: `notif-${mockId()}`,
+    type,
+    title,
+    body,
+    read: false,
+    link: link ?? null,
+    createdAt: new Date().toISOString(),
+  });
+}
 
 // Simulate realistic network latency (150–350 ms)
 function delay(): Promise<void> {
@@ -145,7 +159,31 @@ export async function mockRequest<T>(
     const appId = campAppStatusMatch[2];
     const app = db.applications.find((a) => a.id === appId);
     if (!app) throw mkError(404, "Application not found");
-    app.status = String(body?.status ?? app.status) as typeof app.status;
+    const newStatus = String(body?.status ?? app.status) as typeof app.status;
+    app.status = newStatus;
+
+    const camp = db.campaigns.find((c) => c.id === app.campaignId);
+    const campTitle = camp?.title ?? "a campaign";
+    const NOTIF_MAP: Record<string, NotificationType> = {
+      SHORTLISTED: "APPLICATION_SHORTLISTED",
+      APPROVED: "APPLICATION_APPROVED",
+      REJECTED: "APPLICATION_REJECTED",
+    };
+    const notifType = NOTIF_MAP[newStatus];
+    if (notifType) {
+      const labels: Record<string, string> = {
+        SHORTLISTED: "You've been shortlisted!",
+        APPROVED: "Application approved",
+        REJECTED: "Application not selected",
+      };
+      const bodies: Record<string, string> = {
+        SHORTLISTED: `Zara Lifestyle shortlisted your application for "${campTitle}".`,
+        APPROVED: `Your application for "${campTitle}" has been approved! Get ready to collaborate.`,
+        REJECTED: `Unfortunately your application for "${campTitle}" was not selected this time.`,
+      };
+      addNotification("mock-user-creator-001", notifType, labels[newStatus], bodies[newStatus], "/dashboard/applications");
+    }
+
     return app as T;
   }
 
@@ -168,6 +206,14 @@ export async function mockRequest<T>(
         : undefined,
     };
     db.applications.push(newApp as (typeof db.applications)[number]);
+    // Notify the brand
+    addNotification(
+      "mock-user-brand-001",
+      "APPLICATION_RECEIVED",
+      `New application — ${campaign?.title ?? "your campaign"}`,
+      `Priya Sharma applied to your campaign with a pitch.`,
+      `/dashboard/campaigns/${campaignId}`
+    );
     return newApp as T;
   }
 
@@ -294,6 +340,14 @@ export async function mockRequest<T>(
         : undefined,
     };
     db.hires.push(newHire as (typeof db.hires)[number]);
+    // Notify the influencer
+    addNotification(
+      "mock-user-creator-001",
+      "HIRE_REQUEST",
+      `New hire request from Zara Lifestyle`,
+      `You've been invited: "${String(body?.title ?? "Hire request")}". Budget: ₹${Number(body?.budget ?? 0).toLocaleString("en-IN")}.`,
+      "/dashboard/hires"
+    );
     return newHire as T;
   }
 
@@ -301,7 +355,19 @@ export async function mockRequest<T>(
   if (method === "PATCH" && hireStatusMatch) {
     const hire = db.hires.find((h) => h.id === hireStatusMatch[1]);
     if (!hire) throw mkError(404, "Hire not found");
+    const prevStatus = hire.status;
     hire.status = String(body?.status ?? hire.status);
+    // Notify the brand when creator responds
+    if (prevStatus !== hire.status && (hire.status === "ACCEPTED" || hire.status === "DECLINED")) {
+      const notifType: NotificationType = hire.status === "ACCEPTED" ? "HIRE_ACCEPTED" : "HIRE_DECLINED";
+      addNotification(
+        "mock-user-brand-001",
+        notifType,
+        `Hire ${hire.status === "ACCEPTED" ? "accepted" : "declined"} — ${hire.influencer?.displayName ?? "Influencer"}`,
+        `"${hire.title}" was ${hire.status === "ACCEPTED" ? "accepted" : "declined"}.`,
+        "/dashboard/hires"
+      );
+    }
     return hire as T;
   }
 
@@ -340,10 +406,66 @@ export async function mockRequest<T>(
       platform.verified = true;
       platform.verificationStatus = "VERIFIED";
       platform.verifiedAt = new Date().toISOString();
+      addNotification(
+        "mock-user-creator-001",
+        "VERIFICATION_APPROVED",
+        `${platform.name} account verified!`,
+        `Your @${platform.handle} ${platform.name} account is now verified and visible to brands.`,
+        "/dashboard/profile"
+      );
     } else {
       platform.verificationStatus = "FAILED";
+      addNotification(
+        "mock-user-creator-001",
+        "VERIFICATION_FAILED",
+        `${platform.name} verification failed`,
+        `We couldn't verify @${platform.handle}. Please ensure the code is in your bio and try again.`,
+        "/dashboard/profile"
+      );
     }
     return platform as T;
+  }
+
+  // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+
+  if (method === "GET" && pathname === "/api/v1/notifications") {
+    if (!user) throw mkError(401, "Unauthorized");
+    const bucket = db.notifications[user.id as keyof typeof db.notifications] ?? [];
+    return [...bucket].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) as T;
+  }
+
+  if (method === "GET" && pathname === "/api/v1/notifications/unread-count") {
+    if (!user) throw mkError(401, "Unauthorized");
+    const bucket = db.notifications[user.id as keyof typeof db.notifications] ?? [];
+    return { count: bucket.filter((n) => !n.read).length } as T;
+  }
+
+  if (method === "PATCH" && pathname === "/api/v1/notifications/read-all") {
+    if (!user) throw mkError(401, "Unauthorized");
+    const bucket = db.notifications[user.id as keyof typeof db.notifications];
+    if (bucket) bucket.forEach((n) => { n.read = true; });
+    return { success: true } as T;
+  }
+
+  const notifReadMatch = pathname.match(/^\/api\/v1\/notifications\/([^/]+)\/read$/);
+  if (method === "PATCH" && notifReadMatch) {
+    if (!user) throw mkError(401, "Unauthorized");
+    const bucket = db.notifications[user.id as keyof typeof db.notifications];
+    const notif = bucket?.find((n) => n.id === notifReadMatch[1]);
+    if (!notif) throw mkError(404, "Notification not found");
+    notif.read = true;
+    return notif as T;
+  }
+
+  const notifDeleteMatch = pathname.match(/^\/api\/v1\/notifications\/([^/]+)$/);
+  if (method === "DELETE" && notifDeleteMatch) {
+    if (!user) throw mkError(401, "Unauthorized");
+    const key = user.id as keyof typeof db.notifications;
+    const bucket = db.notifications[key];
+    if (bucket) {
+      db.notifications[key] = bucket.filter((n) => n.id !== notifDeleteMatch[1]) as typeof bucket;
+    }
+    return { success: true } as T;
   }
 
   // ── MISC ──────────────────────────────────────────────────────────────────

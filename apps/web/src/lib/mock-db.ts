@@ -1,7 +1,17 @@
 // In-memory mock database — mutated by mock-handler for stateful interactions.
 // Resets on page refresh (acceptable for demo purposes).
 
-import type { VerificationStatus, ApplicationStatus } from "@influencex/shared";
+import type { VerificationStatus, ApplicationStatus, NotificationType } from "@influencex/shared";
+
+interface MockNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  read: boolean;
+  link: string | null;
+  createdAt: string;
+}
 
 export const MOCK_USERS = {
   "mock-user-brand-001": {
@@ -338,6 +348,88 @@ export const db = {
       },
     },
   ],
+
+  notifications: {
+    "mock-user-brand-001": [
+      {
+        id: "notif-b-001",
+        type: "APPLICATION_RECEIVED" as NotificationType,
+        title: "New application — Summer Fashion Collection 2025",
+        body: "Priya Sharma (170K followers) applied to your campaign with a pitch.",
+        read: false,
+        link: "/dashboard/campaigns/mock-camp-001",
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "notif-b-002",
+        type: "APPLICATION_RECEIVED" as NotificationType,
+        title: "New application — Summer Fashion Collection 2025",
+        body: "Aisha Khan (450K followers) applied with a compelling pitch.",
+        read: false,
+        link: "/dashboard/campaigns/mock-camp-001",
+        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "notif-b-003",
+        type: "HIRE_ACCEPTED" as NotificationType,
+        title: "Hire request accepted — Rohit Mehta",
+        body: 'Rohit Mehta accepted your hire request for "YouTube Review — Summer Style Guide".',
+        read: true,
+        link: "/dashboard/hires",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "notif-b-004",
+        type: "APPLICATION_RECEIVED" as NotificationType,
+        title: "New application — Winter Wardrobe Festive Campaign",
+        body: "Vikram Nair (89K followers) applied to your festive campaign.",
+        read: true,
+        link: "/dashboard/campaigns/mock-camp-002",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ] as MockNotification[],
+
+    "mock-user-creator-001": [
+      {
+        id: "notif-c-001",
+        type: "APPLICATION_SHORTLISTED" as NotificationType,
+        title: "You've been shortlisted!",
+        body: 'Zara Lifestyle shortlisted your application for "Summer Fashion Collection 2025".',
+        read: false,
+        link: "/dashboard/applications",
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "notif-c-002",
+        type: "HIRE_REQUEST" as NotificationType,
+        title: "New direct hire request from Zara Lifestyle",
+        body: "You've been invited to create an Instagram Reel for the Summer Collection. Budget: ₹25,000.",
+        read: false,
+        link: "/dashboard/hires",
+        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "notif-c-003",
+        type: "APPLICATION_APPROVED" as NotificationType,
+        title: "Application approved 🎉",
+        body: 'Your application for "Summer Fashion Collection 2025" has been approved by Zara Lifestyle.',
+        read: true,
+        link: "/dashboard/applications",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "notif-c-004",
+        type: "VERIFICATION_FAILED" as NotificationType,
+        title: "Verification not completed",
+        body: "Your Instagram handle could not be verified — the code was not found in your bio. Please try again.",
+        read: true,
+        link: "/dashboard/profile",
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ] as MockNotification[],
+
+    "mock-user-admin-001": [] as MockNotification[],
+  },
 
   // The logged-in creator's own editable profile
   influencerProfile: {

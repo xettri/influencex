@@ -52,6 +52,9 @@ const ApplicationsPage = lazy(() =>
 const AdminVerificationsPage = lazy(() =>
   import("@/pages/admin/AdminVerificationsPage").then((m) => ({ default: m.AdminVerificationsPage }))
 );
+const NotificationsPage = lazy(() =>
+  import("@/pages/dashboard/NotificationsPage").then((m) => ({ default: m.NotificationsPage }))
+);
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
@@ -114,6 +117,10 @@ export default function App() {
             <Route
               path="/dashboard/profile"
               element={<DashboardShell><ProfileSetupPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/notifications"
+              element={<DashboardShell><NotificationsPage /></DashboardShell>}
             />
             <Route
               path="/dashboard/*"

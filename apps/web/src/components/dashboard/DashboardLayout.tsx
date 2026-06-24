@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, Bell, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
+import { useNotificationStore } from "@/store/notifications";
 import { DashboardNav } from "./DashboardNav";
+import { NotificationBell } from "./NotificationBell";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { startPolling, stopPolling } = useNotificationStore();
+
+  useEffect(() => {
+    startPolling();
+    return () => stopPolling();
+  }, [startPolling, stopPolling]);
 
   const handleLogout = () => {
     logout();
@@ -71,10 +79,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/[0.04] hover:bg-black/[0.07] text-ink/50 hover:text-ink transition-all relative">
-              <Bell className="w-4.5 h-4.5 w-[18px] h-[18px]" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-violet-500" />
-            </button>
+            <NotificationBell />
             <div className="hidden sm:flex items-center gap-2.5 pl-2 border-l border-black/8">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white text-[11px] font-bold">
                 {user.email.charAt(0).toUpperCase()}

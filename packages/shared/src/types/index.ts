@@ -137,3 +137,24 @@ export interface AuthTokens {
   refreshToken: string;
   expiresIn: number;
 }
+
+export type NotificationType =
+  | "APPLICATION_RECEIVED"
+  | "APPLICATION_SHORTLISTED"
+  | "APPLICATION_APPROVED"
+  | "APPLICATION_REJECTED"
+  | "VERIFICATION_APPROVED"
+  | "VERIFICATION_FAILED"
+  | "HIRE_REQUEST"
+  | "HIRE_ACCEPTED"
+  | "HIRE_DECLINED";
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  read: boolean;
+  link: string | null;
+  createdAt: string;
+}

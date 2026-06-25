@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Save, Plus, Trash2, CheckCircle2, Clock, Loader2, X, ShieldCheck, Copy, AlertCircle,
+  Save, Plus, Trash2, CheckCircle2, Clock, Loader2, X, ShieldCheck, Copy, AlertCircle, Zap,
 } from "lucide-react";
 import type { InfluencerProfile, Platform, PlatformName, RateCard } from "@influencex/shared";
 import { UpdateInfluencerProfileSchema, AddPlatformSchema } from "@influencex/shared";
@@ -82,6 +82,8 @@ interface PlatformCardProps {
 function PlatformCard({ platform, onRemove, onRequestVerify, removing, requestingVerify }: PlatformCardProps) {
   const meta = PLATFORMS.find((pl) => pl.value === platform.name);
   const status = platform.verificationStatus ?? "UNVERIFIED";
+  const isAutoApi = platform.verificationMethod === "AUTO_API";
+  const isYouTube = platform.name === "YOUTUBE";
 
   const copyCode = () => {
     if (!platform.verificationCode) return;
@@ -104,13 +106,26 @@ function PlatformCard({ platform, onRemove, onRequestVerify, removing, requestin
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-bold text-ink">{meta?.label ?? platform.name}</p>
-          <p className="text-[11px] text-ink-muted">@{platform.handle} · {platform.followers.toLocaleString("en-IN")} followers</p>
+          <p className="text-[11px] text-ink-muted">
+            @{platform.handle}
+            {isAutoApi && platform.apiFollowerCount != null
+              ? ` · ${platform.apiFollowerCount.toLocaleString("en-IN")} subs (live)`
+              : ` · ${platform.followers.toLocaleString("en-IN")} followers`}
+            {isAutoApi && platform.apiEngagementRate != null && ` · ${platform.apiEngagementRate.toFixed(1)}% eng.`}
+          </p>
         </div>
 
         {status === "VERIFIED" && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold whitespace-nowrap">
-            <CheckCircle2 className="w-3 h-3" /> Verified
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isAutoApi && (
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-50 border border-violet-200 text-violet-600 text-[9px] font-black uppercase tracking-wide whitespace-nowrap">
+                <Zap className="w-2.5 h-2.5" /> API
+              </span>
+            )}
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold whitespace-nowrap">
+              <CheckCircle2 className="w-3 h-3" /> Verified
+            </span>
+          </div>
         )}
         {status === "PENDING" && (
           <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold whitespace-nowrap">
@@ -138,18 +153,33 @@ function PlatformCard({ platform, onRemove, onRequestVerify, removing, requestin
         </button>
       </div>
 
+      {/* Auto-verified detail panel */}
+      {status === "VERIFIED" && isAutoApi && (
+        <div className="p-3.5 border-t border-emerald-100 bg-emerald-50/40">
+          <div className="flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+            <p className="text-[11px] text-emerald-800 font-semibold">
+              Verified automatically via the YouTube Data API — follower count and engagement rate are live data.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Verification panel — UNVERIFIED or FAILED */}
       {(status === "UNVERIFIED" || status === "FAILED") && platform.verificationCode && (
-        <div className={`p-4 border-t border-black/6 ${status === "FAILED" ? "bg-red-50/40" : "bg-violet-50/30"}`}>
+        <div className={`p-4 border-t border-black/6 ${status === "FAILED" ? "bg-red-50/40" : isYouTube ? "bg-violet-50/40" : "bg-violet-50/30"}`}>
           {status === "FAILED" && (
             <p className="text-[11px] font-bold text-red-600 uppercase tracking-wide mb-3">
               Verification failed — please try again
             </p>
           )}
           {status === "UNVERIFIED" && (
-            <p className="text-[11px] font-bold text-ink/50 uppercase tracking-wide mb-3">
-              Verify your {meta?.label} account
-            </p>
+            <div className="flex items-center gap-2 mb-3">
+              {isYouTube && <Zap className="w-3.5 h-3.5 text-violet-500 shrink-0" />}
+              <p className="text-[11px] font-bold text-ink/50 uppercase tracking-wide">
+                {isYouTube ? "Auto-verify via YouTube API" : `Verify your ${meta?.label} account`}
+              </p>
+            </div>
           )}
 
           <div className="flex items-center gap-2 mb-3">
@@ -167,8 +197,20 @@ function PlatformCard({ platform, onRemove, onRequestVerify, removing, requestin
           </div>
 
           <p className="text-[11px] text-ink-muted leading-relaxed mb-3">
-            Add this code anywhere in your {meta?.label} bio or profile description.
-            Once added, click <strong>Request Verification</strong> — our team will verify within 24–48 hours.{" "}
+            {isYouTube ? (
+              <>
+                Add this code anywhere in your YouTube channel{" "}
+                <strong>About / Description</strong> section. Once added, click{" "}
+                <strong>Verify via YouTube API</strong> — verification happens{" "}
+                <strong>automatically in seconds</strong> and pulls your real subscriber count and
+                engagement rate directly from YouTube.{" "}
+              </>
+            ) : (
+              <>
+                Add this code anywhere in your {meta?.label} bio or profile description. Once added,
+                click <strong>Request Verification</strong> — our team will verify within 24–48 hours.{" "}
+              </>
+            )}
             {meta?.url && (
               <a href={meta.url(platform.handle)} target="_blank" rel="noopener noreferrer" className="text-violet-600 underline">
                 Open {meta.label} →
@@ -182,10 +224,13 @@ function PlatformCard({ platform, onRemove, onRequestVerify, removing, requestin
             disabled={requestingVerify}
             className="btn-primary text-[12px] py-2 px-4 disabled:opacity-60"
           >
-            {requestingVerify
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : <><ShieldCheck className="w-3.5 h-3.5" /> Request Verification</>
-            }
+            {requestingVerify ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : isYouTube ? (
+              <><Zap className="w-3.5 h-3.5" /> Verify via YouTube API</>
+            ) : (
+              <><ShieldCheck className="w-3.5 h-3.5" /> Request Verification</>
+            )}
           </button>
         </div>
       )}
@@ -198,7 +243,9 @@ function PlatformCard({ platform, onRemove, onRequestVerify, removing, requestin
             <div>
               <p className="text-[12px] font-semibold text-amber-800">Verification in progress</p>
               <p className="text-[11px] text-amber-700/70 mt-0.5 leading-relaxed">
-                Our team is reviewing your {meta?.label} profile. This usually takes 24–48 hours.
+                {isYouTube
+                  ? "The verification code was not detected in your channel description. Add the code and try again, or our team will review manually."
+                  : `Our team is reviewing your ${meta?.label} profile. This usually takes 24–48 hours.`}
               </p>
             </div>
           </div>
@@ -304,7 +351,15 @@ export function ProfileSetupPage() {
       await api.post(`/api/v1/influencers/me/platforms/${platformId}/request-verify`, {});
       const updated = await api.get<InfluencerProfile>("/api/v1/influencers/me");
       setProfile(updated);
-      toast.success("Verification requested! We'll review within 24–48 hours.");
+
+      const updatedPlatform = updated.platforms.find((p) => p.id === platformId);
+      if (updatedPlatform?.verificationStatus === "VERIFIED" && updatedPlatform?.verificationMethod === "AUTO_API") {
+        toast.success("Verified via YouTube API! Real subscriber count and engagement rate have been pulled.");
+      } else if (updatedPlatform?.verificationStatus === "VERIFIED") {
+        toast.success("Platform verified!");
+      } else {
+        toast.success("Verification requested. Our team will review within 24–48 hours.");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to request verification");
     } finally {

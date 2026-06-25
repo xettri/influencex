@@ -48,7 +48,10 @@ export interface Platform {
   verified: boolean;
   verificationCode: string | null;
   verificationStatus: VerificationStatus;
+  verificationMethod: string | null;
   verifiedAt: string | null;
+  apiFollowerCount: number | null;
+  apiEngagementRate: number | null;
   createdAt: string;
 }
 
@@ -67,7 +70,23 @@ export interface InfluencerProfile {
   minRate?: number;
   profileCompleted: boolean;
   verified: boolean;
+  authenticityScore: number;
+  qualityFlags: string[];
   createdAt: string;
+}
+
+export interface AuthenticityReport {
+  score: number;
+  flags: string[];
+  platforms: {
+    name: PlatformName;
+    handle: string;
+    verificationStatus: VerificationStatus;
+    verificationMethod: string | null;
+    followers: number;
+    apiFollowerCount: number | null;
+    apiEngagementRate: number | null;
+  }[];
 }
 
 export interface Campaign {

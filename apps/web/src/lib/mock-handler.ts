@@ -265,13 +265,16 @@ export async function mockRequest<T>(
     if (existing) throw mkError(409, "You already have this platform connected");
     const newPlatform = {
       id: mockId(),
-      name: body?.name as "INSTAGRAM",
+      name: body?.name as import("@influencex/shared").PlatformName,
       handle: String(body?.handle ?? ""),
       followers: Number(body?.followers ?? 0),
       verified: false,
       verificationCode: mockVerifCode(),
       verificationStatus: "UNVERIFIED" as import("@influencex/shared").VerificationStatus,
+      verificationMethod: null as string | null,
       verifiedAt: null as string | null,
+      apiFollowerCount: null as number | null,
+      apiEngagementRate: null as number | null,
       createdAt: new Date().toISOString(),
     };
     db.influencerProfile.platforms.push(newPlatform);
@@ -287,7 +290,35 @@ export async function mockRequest<T>(
     const platform = db.influencerProfile.platforms.find((p) => p.id === requestVerifyMatch[1]);
     if (!platform) throw mkError(404, "Platform not found");
     if (platform.verificationStatus === "VERIFIED") throw mkError(400, "Platform is already verified");
+
+    if (platform.name === "YOUTUBE") {
+      // Simulate YouTube auto-verify — in the real app the API key triggers a live check
+      platform.verified = true;
+      platform.verificationStatus = "VERIFIED";
+      platform.verificationMethod = "AUTO_API";
+      platform.verifiedAt = new Date().toISOString();
+      platform.apiFollowerCount = Math.round(platform.followers * (0.92 + Math.random() * 0.1));
+      platform.apiEngagementRate = parseFloat((2.5 + Math.random() * 3).toFixed(2));
+      // Recompute score: verified + API data → boosts score
+      db.influencerProfile.authenticityScore = 82;
+      db.influencerProfile.qualityFlags = [];
+      addNotification(
+        "mock-user-creator-001",
+        "VERIFICATION_APPROVED",
+        "YouTube channel verified!",
+        `Your @${platform.handle} YouTube channel was automatically verified.`,
+        "/dashboard/profile"
+      );
+      return { ...db.influencerProfile, message: "YouTube channel automatically verified!" } as T;
+    }
+
+    // Non-YouTube: manual admin queue
     platform.verificationStatus = "PENDING";
+    // Score update: PENDING gives partial points
+    db.influencerProfile.authenticityScore = Math.min(
+      100,
+      db.influencerProfile.authenticityScore + 8
+    );
     return db.influencerProfile as T;
   }
 
@@ -298,6 +329,43 @@ export async function mockRequest<T>(
     return db.influencerProfile as T;
   }
 
+  // Authenticity report — must come before the single-influencer matcher
+  const authenticityMatch = pathname.match(/^\/api\/v1\/influencers\/([^/]+)\/authenticity$/);
+  if (method === "GET" && authenticityMatch) {
+    const infId = authenticityMatch[1];
+    // Creator's own profile
+    if (infId === db.influencerProfile.id) {
+      return {
+        score: db.influencerProfile.authenticityScore,
+        flags: db.influencerProfile.qualityFlags,
+        platforms: db.influencerProfile.platforms.map((p) => ({
+          name: p.name,
+          handle: p.handle,
+          verificationStatus: p.verificationStatus,
+          verificationMethod: p.verificationMethod,
+          followers: p.followers,
+          apiFollowerCount: p.apiFollowerCount,
+          apiEngagementRate: p.apiEngagementRate,
+        })),
+      } as T;
+    }
+    const inf = MOCK_DIRECTORY.find((i) => i.id === infId);
+    if (!inf) throw mkError(404, "Influencer not found");
+    return {
+      score: inf.authenticityScore,
+      flags: inf.qualityFlags,
+      platforms: inf.platforms.map((p) => ({
+        name: p.name,
+        handle: p.handle,
+        verificationStatus: p.verificationStatus,
+        verificationMethod: p.verificationMethod,
+        followers: p.followers,
+        apiFollowerCount: p.apiFollowerCount,
+        apiEngagementRate: p.apiEngagementRate,
+      })),
+    } as T;
+  }
+
   // Single influencer — must come after /me routes
   const infMatch = pathname.match(/^\/api\/v1\/influencers\/([^/]+)$/);
   if (method === "GET" && infMatch) {
@@ -305,7 +373,7 @@ export async function mockRequest<T>(
     if (!inf) throw mkError(404, "Influencer not found");
     return {
       ...inf,
-      platforms: inf.platforms.map((p) => ({ ...p, verified: false })),
+      platforms: inf.platforms.map((p) => ({ ...p, verified: p.verificationStatus === "VERIFIED" })),
       _count: { applications: 3, directHires: 2 },
     } as T;
   }
@@ -405,7 +473,14 @@ export async function mockRequest<T>(
     if (action === "verify") {
       platform.verified = true;
       platform.verificationStatus = "VERIFIED";
+      platform.verificationMethod = "MANUAL_ADMIN";
       platform.verifiedAt = new Date().toISOString();
+      // Recompute score
+      const verifiedCount = db.influencerProfile.platforms.filter((p) => p.verificationStatus === "VERIFIED").length;
+      db.influencerProfile.authenticityScore = Math.min(100, 30 + verifiedCount * 20 + 28);
+      db.influencerProfile.qualityFlags = verifiedCount === db.influencerProfile.platforms.length
+        ? ["SELF_REPORTED_ONLY"]
+        : [];
       addNotification(
         "mock-user-creator-001",
         "VERIFICATION_APPROVED",
@@ -415,6 +490,7 @@ export async function mockRequest<T>(
       );
     } else {
       platform.verificationStatus = "FAILED";
+      db.influencerProfile.authenticityScore = Math.max(0, db.influencerProfile.authenticityScore - 5);
       addNotification(
         "mock-user-creator-001",
         "VERIFICATION_FAILED",

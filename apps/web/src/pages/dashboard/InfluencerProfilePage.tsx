@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, MapPin, Users, TrendingUp, IndianRupee, Briefcase } from "lucide-react";
-import type { RateCard, PlatformName } from "@influencex/shared";
+import type { RateCard, PlatformName, VerificationStatus } from "@influencex/shared";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
 import { useAuthStore } from "@/store/auth";
+import { AuthenticityPanel } from "@/components/dashboard/AuthenticityPanel";
 
 interface InfluencerDetail {
   id: string;
@@ -19,7 +20,19 @@ interface InfluencerDetail {
   rateCard: RateCard | null;
   minRate: number | null;
   verified: boolean;
-  platforms: { id: string; name: PlatformName; handle: string; followers: number; verified: boolean }[];
+  authenticityScore: number;
+  qualityFlags: string[];
+  platforms: {
+    id: string;
+    name: PlatformName;
+    handle: string;
+    followers: number;
+    verified: boolean;
+    verificationStatus: VerificationStatus;
+    verificationMethod: string | null;
+    apiFollowerCount: number | null;
+    apiEngagementRate: number | null;
+  }[];
   _count: { applications: number; directHires: number };
 }
 
@@ -201,6 +214,25 @@ export function InfluencerProfilePage() {
           )}
         </motion.div>
       )}
+
+      {/* Authenticity report */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="bg-white rounded-2xl border border-black/6 p-6 mb-4">
+        <h2 className="font-display font-bold text-[15px] text-ink mb-5">Authenticity report</h2>
+        <AuthenticityPanel
+          score={profile.authenticityScore}
+          flags={profile.qualityFlags}
+          platforms={profile.platforms.map((p) => ({
+            name: p.name,
+            handle: p.handle,
+            verificationStatus: p.verificationStatus,
+            verificationMethod: p.verificationMethod,
+            followers: p.followers,
+            apiFollowerCount: p.apiFollowerCount,
+            apiEngagementRate: p.apiEngagementRate,
+          }))}
+        />
+      </motion.div>
     </div>
   );
 }

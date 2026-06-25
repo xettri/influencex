@@ -72,9 +72,11 @@ model InfluencerProfile {
   engagementRate   Float                 @default(0)
   rateCard         Json?
   minRate          Float?
-  profileCompleted Boolean               @default(false)
-  verified         Boolean               @default(false)
-  platforms        Platform[]
+  profileCompleted  Boolean               @default(false)
+  verified          Boolean               @default(false)
+  authenticityScore Float                 @default(0)
+  qualityFlags      String[]              @default([])
+  platforms         Platform[]
   applications     CampaignApplication[]
   invitations      CampaignInvitation[]
   directHires      DirectHire[]
@@ -99,7 +101,10 @@ model Platform {
   verified           Boolean            @default(false)
   verificationCode   String?
   verificationStatus VerificationStatus @default(UNVERIFIED)
+  verificationMethod String?            // "AUTO_API" | "MANUAL_ADMIN"
   verifiedAt         DateTime?
+  apiFollowerCount   Int?               // real count from platform API
+  apiEngagementRate  Float?             // real engagement rate from platform API
   createdAt          DateTime           @default(now())
 
   @@unique([influencerId, name])

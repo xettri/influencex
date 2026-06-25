@@ -5,6 +5,9 @@ import {
   AddPlatformSchema,
 } from "@influencex/shared";
 import { sendSuccess, sendPaginated, sendError } from "../utils/response.js";
+import { tryAutoVerifyYouTube } from "../services/auto-verify.js";
+import { computeAndSaveAuthenticityScore } from "../services/authenticity.js";
+import { notify } from "../lib/notify.js";
 
 const VERIF_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function generateVerifCode(): string {
@@ -81,8 +84,10 @@ const influencerRoutes: FastifyPluginAsync = async (fastify) => {
           minRate: true,
           rateCard: true,
           verified: true,
+          authenticityScore: true,
+          qualityFlags: true,
           platforms: {
-            select: { id: true, name: true, handle: true, followers: true, verified: true },
+            select: { id: true, name: true, handle: true, followers: true, verified: true, verificationStatus: true, verificationMethod: true },
           },
         },
         skip: (page - 1) * limit,
@@ -203,11 +208,78 @@ const influencerRoutes: FastifyPluginAsync = async (fastify) => {
       return sendError(reply, 400, "Platform is already verified", "ALREADY_VERIFIED");
     }
 
+    // YouTube: attempt auto-verify via YouTube Data API
+    if (platform.name === "YOUTUBE" && platform.verificationCode) {
+      const apiKey = process.env.YOUTUBE_API_KEY ?? "";
+      if (apiKey) {
+        const result = await tryAutoVerifyYouTube(platform.handle, platform.verificationCode, apiKey);
+        if (result.verified) {
+          const verified = await fastify.prisma.platform.update({
+            where: { id: platformId },
+            data: {
+              verified: true,
+              verificationStatus: "VERIFIED",
+              verificationMethod: "AUTO_API",
+              verifiedAt: new Date(),
+              ...(result.apiFollowerCount != null ? { apiFollowerCount: result.apiFollowerCount } : {}),
+              ...(result.apiEngagementRate != null ? { apiEngagementRate: result.apiEngagementRate } : {}),
+            },
+          });
+          await computeAndSaveAuthenticityScore(fastify.prisma, profile.id);
+          void notify(fastify.prisma, {
+            userId: profile.userId,
+            type: "VERIFICATION_APPROVED",
+            title: "YouTube channel verified!",
+            body: `Your @${platform.handle} YouTube channel was automatically verified via the YouTube API.`,
+            link: "/dashboard/profile",
+          });
+          return sendSuccess(reply, verified, 200, "YouTube channel automatically verified!");
+        }
+        // Code not found in description — queue for manual review
+        const pending = await fastify.prisma.platform.update({
+          where: { id: platformId },
+          data: { verificationStatus: "PENDING" },
+        });
+        await computeAndSaveAuthenticityScore(fastify.prisma, profile.id);
+        return sendSuccess(
+          reply,
+          { ...pending, autoVerifyNote: result.reason },
+          200,
+          result.reason ?? "Verification code not found. Queued for manual review."
+        );
+      }
+    }
+
+    // All other platforms: manual admin queue
     const updated = await fastify.prisma.platform.update({
       where: { id: platformId },
       data: { verificationStatus: "PENDING" },
     });
-    return sendSuccess(reply, updated, 200, "Verification requested");
+    await computeAndSaveAuthenticityScore(fastify.prisma, profile.id);
+    return sendSuccess(reply, updated, 200, "Verification requested — our team will review within 24–48 hours");
+  });
+
+  // GET /influencers/:id/authenticity — public authenticity report
+  fastify.get("/:id/authenticity", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const profile = await fastify.prisma.influencerProfile.findUnique({
+      where: { id },
+      include: { platforms: true },
+    });
+    if (!profile) return sendError(reply, 404, "Influencer not found", "NOT_FOUND");
+    return sendSuccess(reply, {
+      score: profile.authenticityScore,
+      flags: profile.qualityFlags,
+      platforms: profile.platforms.map((p) => ({
+        name: p.name,
+        handle: p.handle,
+        verificationStatus: p.verificationStatus,
+        verificationMethod: p.verificationMethod,
+        followers: p.followers,
+        apiFollowerCount: p.apiFollowerCount,
+        apiEngagementRate: p.apiEngagementRate,
+      })),
+    });
   });
 
   // DELETE /influencers/me/platforms/:platformId — remove a platform

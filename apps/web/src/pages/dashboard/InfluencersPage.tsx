@@ -8,6 +8,7 @@ import type { PaginatedResponse, PlatformName } from "@influencex/shared";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
 import { useAuthStore } from "@/store/auth";
+import { AuthenticityBadge } from "@/components/dashboard/AuthenticityBadge";
 
 interface DirectoryInfluencer {
   id: string;
@@ -21,6 +22,8 @@ interface DirectoryInfluencer {
   minRate: number | null;
   rateCard: Record<string, number> | null;
   verified: boolean;
+  authenticityScore: number;
+  qualityFlags: string[];
   platforms: { id: string; name: PlatformName; handle: string; followers: number }[];
 }
 
@@ -63,12 +66,17 @@ function InfluencerCard({ influencer }: { influencer: DirectoryInfluencer }) {
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <p className="text-[14px] font-bold text-ink leading-tight truncate">{influencer.displayName}</p>
             {influencer.verified && (
               <CheckCircle2 className="w-3.5 h-3.5 text-violet-500 shrink-0" strokeWidth={2.5} />
             )}
           </div>
+          {influencer.authenticityScore > 0 && (
+            <div className="mt-1">
+              <AuthenticityBadge score={influencer.authenticityScore} showLabel />
+            </div>
+          )}
           {influencer.location && (
             <p className="text-[11px] text-ink-muted mt-0.5">{influencer.location}</p>
           )}

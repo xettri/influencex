@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
 import { useSocialPreview } from "@/hooks/useSocialPreview";
 import { SocialPreviewCard } from "@/components/dashboard/SocialPreviewCard";
+import { AuthenticityPanel } from "@/components/dashboard/AuthenticityPanel";
 
 const PLATFORMS: { value: PlatformName; label: string; color: string; url: (handle: string) => string }[] = [
   { value: "INSTAGRAM", label: "Instagram", color: "bg-pink-500", url: (h) => `https://instagram.com/${h}` },
@@ -363,6 +364,29 @@ export function ProfileSetupPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Authenticity score */}
+      {profile && (profile.authenticityScore > 0 || profile.platforms.length > 0) && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-4">
+          <div className="bg-white rounded-2xl border border-black/6 p-6">
+            <h3 className="font-display font-bold text-[15px] text-ink mb-5">Your authenticity score</h3>
+            <AuthenticityPanel
+              score={profile.authenticityScore}
+              flags={profile.qualityFlags ?? []}
+              platforms={(profile.platforms ?? []).map((p) => ({
+                name: p.name,
+                handle: p.handle,
+                verificationStatus: p.verificationStatus,
+                verificationMethod: p.verificationMethod ?? null,
+                followers: p.followers,
+                apiFollowerCount: p.apiFollowerCount ?? null,
+                apiEngagementRate: p.apiEngagementRate ?? null,
+              }))}
+              isOwner
+            />
+          </div>
+        </motion.div>
+      )}
 
       <form onSubmit={handleSaveProfile} className="space-y-4">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>

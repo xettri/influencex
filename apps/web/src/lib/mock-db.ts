@@ -1,7 +1,7 @@
 // In-memory mock database — mutated by mock-handler for stateful interactions.
 // Resets on page refresh (acceptable for demo purposes).
 
-import type { VerificationStatus, ApplicationStatus, NotificationType } from "@influencex/shared";
+import type { VerificationStatus, ApplicationStatus, NotificationType, PlatformName } from "@influencex/shared";
 
 interface MockNotification {
   id: string;
@@ -55,9 +55,11 @@ export const MOCK_DIRECTORY = [
     minRate: 5000,
     rateCard: { perPost: 15000, perReel: 25000, perStory: 5000, perVideo: 35000 },
     verified: true,
+    authenticityScore: 70,
+    qualityFlags: ["SELF_REPORTED_ONLY"],
     platforms: [
-      { id: "plat-001", name: "INSTAGRAM" as const, handle: "priya.sharma", followers: 125000 },
-      { id: "plat-002", name: "YOUTUBE" as const, handle: "PriyaSharmaVlogs", followers: 45000 },
+      { id: "plat-001", name: "INSTAGRAM" as PlatformName, handle: "priya.sharma", followers: 125000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
+      { id: "plat-002", name: "YOUTUBE" as PlatformName, handle: "PriyaSharmaVlogs", followers: 45000, verificationStatus: "UNVERIFIED" as VerificationStatus, verificationMethod: null as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
     ],
   },
   {
@@ -72,9 +74,11 @@ export const MOCK_DIRECTORY = [
     minRate: 12000,
     rateCard: { perPost: 18000, perReel: 30000, perVideo: 55000 },
     verified: true,
+    authenticityScore: 88,
+    qualityFlags: [],
     platforms: [
-      { id: "plat-003", name: "YOUTUBE" as const, handle: "RohitTechReviews", followers: 210000 },
-      { id: "plat-004", name: "INSTAGRAM" as const, handle: "rohit.techie", followers: 70000 },
+      { id: "plat-003", name: "YOUTUBE" as PlatformName, handle: "RohitTechReviews", followers: 210000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "AUTO_API" as string | null, apiFollowerCount: 214500 as number | null, apiEngagementRate: 4.1 as number | null },
+      { id: "plat-004", name: "INSTAGRAM" as PlatformName, handle: "rohit.techie", followers: 70000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
     ],
   },
   {
@@ -89,9 +93,11 @@ export const MOCK_DIRECTORY = [
     minRate: 30000,
     rateCard: { perPost: 35000, perReel: 55000, perStory: 10000 },
     verified: true,
+    authenticityScore: 78,
+    qualityFlags: ["SELF_REPORTED_ONLY"],
     platforms: [
-      { id: "plat-005", name: "INSTAGRAM" as const, handle: "aisha.beauty", followers: 380000 },
-      { id: "plat-006", name: "YOUTUBE" as const, handle: "AishaKhanBeauty", followers: 70000 },
+      { id: "plat-005", name: "INSTAGRAM" as PlatformName, handle: "aisha.beauty", followers: 380000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
+      { id: "plat-006", name: "YOUTUBE" as PlatformName, handle: "AishaKhanBeauty", followers: 70000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
     ],
   },
   {
@@ -106,9 +112,11 @@ export const MOCK_DIRECTORY = [
     minRate: 8000,
     rateCard: { perPost: 10000, perReel: 18000, perStory: 4000 },
     verified: true,
+    authenticityScore: 83,
+    qualityFlags: [],
     platforms: [
-      { id: "plat-007", name: "INSTAGRAM" as const, handle: "vikram.travels", followers: 72000 },
-      { id: "plat-008", name: "YOUTUBE" as const, handle: "VikramExplores", followers: 17000 },
+      { id: "plat-007", name: "INSTAGRAM" as PlatformName, handle: "vikram.travels", followers: 72000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
+      { id: "plat-008", name: "YOUTUBE" as PlatformName, handle: "VikramExplores", followers: 17000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "AUTO_API" as string | null, apiFollowerCount: 16800 as number | null, apiEngagementRate: 6.1 as number | null },
     ],
   },
   {
@@ -123,9 +131,11 @@ export const MOCK_DIRECTORY = [
     minRate: 20000,
     rateCard: { perPost: 22000, perReel: 35000, perStory: 8000, perVideo: 45000 },
     verified: true,
+    authenticityScore: 74,
+    qualityFlags: ["SELF_REPORTED_ONLY"],
     platforms: [
-      { id: "plat-009", name: "INSTAGRAM" as const, handle: "sneha.cooks", followers: 155000 },
-      { id: "plat-010", name: "YOUTUBE" as const, handle: "SnehaKitchen", followers: 45000 },
+      { id: "plat-009", name: "INSTAGRAM" as PlatformName, handle: "sneha.cooks", followers: 155000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
+      { id: "plat-010", name: "YOUTUBE" as PlatformName, handle: "SnehaKitchen", followers: 45000, verificationStatus: "PENDING" as VerificationStatus, verificationMethod: null as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
     ],
   },
   {
@@ -140,9 +150,11 @@ export const MOCK_DIRECTORY = [
     minRate: 25000,
     rateCard: { perPost: 30000, perReel: 50000, perStory: 12000, perVideo: 80000 },
     verified: true,
+    authenticityScore: 91,
+    qualityFlags: [],
     platforms: [
-      { id: "plat-011", name: "INSTAGRAM" as const, handle: "aryan.fitness", followers: 420000 },
-      { id: "plat-012", name: "YOUTUBE" as const, handle: "AryanFit", followers: 100000 },
+      { id: "plat-011", name: "INSTAGRAM" as PlatformName, handle: "aryan.fitness", followers: 420000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "MANUAL_ADMIN" as string | null, apiFollowerCount: null as number | null, apiEngagementRate: null as number | null },
+      { id: "plat-012", name: "YOUTUBE" as PlatformName, handle: "AryanFit", followers: 100000, verificationStatus: "VERIFIED" as VerificationStatus, verificationMethod: "AUTO_API" as string | null, apiFollowerCount: 98200 as number | null, apiEngagementRate: 5.6 as number | null },
     ],
   },
 ];
@@ -446,27 +458,35 @@ export const db = {
     minRate: 5000 as number | null,
     profileCompleted: true,
     verified: false,
+    authenticityScore: 50 as number,
+    qualityFlags: ["SELF_REPORTED_ONLY"] as string[],
     platforms: [
       {
         id: "plat-001",
-        name: "INSTAGRAM" as const,
+        name: "INSTAGRAM" as PlatformName,
         handle: "priya.sharma",
         followers: 125000,
         verified: false,
         verificationCode: "IFX-A3KM9X",
         verificationStatus: "UNVERIFIED" as VerificationStatus,
+        verificationMethod: null as string | null,
         verifiedAt: null as string | null,
+        apiFollowerCount: null as number | null,
+        apiEngagementRate: null as number | null,
         createdAt: "2025-01-20T12:00:00Z",
       },
       {
         id: "plat-002",
-        name: "YOUTUBE" as const,
+        name: "YOUTUBE" as PlatformName,
         handle: "PriyaSharmaVlogs",
         followers: 45000,
         verified: false,
         verificationCode: "IFX-B7YP2Q",
         verificationStatus: "PENDING" as VerificationStatus,
+        verificationMethod: null as string | null,
         verifiedAt: null as string | null,
+        apiFollowerCount: null as number | null,
+        apiEngagementRate: null as number | null,
         createdAt: "2025-01-20T12:05:00Z",
       },
     ],

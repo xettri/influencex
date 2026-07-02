@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Send, CheckCircle2, Clock, XCircle, Circle, ArrowRight, Bookmark,
+  Send, CheckCircle2, Clock, XCircle, Circle, ArrowRight, Bookmark, BarChart3,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
@@ -165,10 +165,18 @@ export function ApplicationsPage() {
                       </p>
                     )}
 
-                    <div className="mt-3 pt-3 border-t border-black/6 flex items-center justify-end">
+                    <div className="mt-3 pt-3 border-t border-black/6 flex items-center justify-between gap-2">
+                      {app.status === "APPROVED" && (
+                        <Link
+                          to="/dashboard/deliverables"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 text-[11px] font-bold hover:bg-violet-100 transition-colors"
+                        >
+                          <BarChart3 className="w-3 h-3" /> Track Deliverable
+                        </Link>
+                      )}
                       <Link
                         to={`/dashboard/campaigns/${app.campaignId}`}
-                        className="flex items-center gap-1 text-[12px] font-semibold text-brand hover:underline"
+                        className="flex items-center gap-1 text-[12px] font-semibold text-brand hover:underline ml-auto"
                       >
                         View Campaign <ArrowRight className="w-3 h-3" />
                       </Link>

@@ -188,6 +188,73 @@ export interface CreatorAnalytics {
   activityByMonth: { month: string; applications: number }[];
 }
 
+export type DeliverableStatus = "ACTIVE" | "COMPLETED" | "ARCHIVED";
+
+export interface CampaignDeliverable {
+  id: string;
+  trackingCode: string;
+  targetUrl: string;
+  agreedBudget: number | null;
+  campaignId: string | null;
+  applicationId: string | null;
+  directHireId: string | null;
+  influencerId: string;
+  influencer?: { id: string; displayName: string; avatar: string | null };
+  campaign?: { id: string; title: string; brand: { name: string } } | null;
+  ytVideoId: string | null;
+  ytViews: number;
+  ytLikes: number;
+  ytComments: number;
+  ytLastSynced: string | null;
+  reportedReach: number | null;
+  reportedImpressions: number | null;
+  reportedLikes: number | null;
+  reportedComments: number | null;
+  reportedShares: number | null;
+  reportedSaves: number | null;
+  totalClicks: number;
+  uniqueClicks: number;
+  conversions: number;
+  revenue: number;
+  status: DeliverableStatus;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FunnelLayer {
+  totalReach: number;
+  totalImpressions: number;
+  cpm: number | null;
+}
+
+export interface FunnelMiddleLayer {
+  totalEngagements: number;
+  totalClicks: number;
+  cpe: number | null;
+  cpc: number | null;
+  ctr: number | null;
+  breakdown: { likes: number; comments: number; shares: number; saves: number };
+}
+
+export interface FunnelBottomLayer {
+  totalConversions: number;
+  totalRevenue: number;
+  cpa: number | null;
+  roas: number | null;
+}
+
+export interface CampaignMetrics {
+  campaign: { id: string; title: string; budget: number; budgetType: BudgetType };
+  deliverables: CampaignDeliverable[];
+  funnel: {
+    budgetBase: number;
+    top: FunnelLayer;
+    middle: FunnelMiddleLayer;
+    bottom: FunnelBottomLayer;
+  };
+}
+
 export type NotificationType =
   | "APPLICATION_RECEIVED"
   | "APPLICATION_SHORTLISTED"

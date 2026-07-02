@@ -58,6 +58,9 @@ const NotificationsPage = lazy(() =>
 const AnalyticsPage = lazy(() =>
   import("@/pages/dashboard/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage }))
 );
+const DeliverablesPage = lazy(() =>
+  import("@/pages/dashboard/DeliverablesPage").then((m) => ({ default: m.DeliverablesPage }))
+);
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
@@ -128,6 +131,10 @@ export default function App() {
             <Route
               path="/dashboard/analytics"
               element={<DashboardShell><AnalyticsPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/deliverables"
+              element={<DashboardShell><DeliverablesPage /></DashboardShell>}
             />
             <Route
               path="/dashboard/*"

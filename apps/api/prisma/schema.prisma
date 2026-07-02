@@ -80,6 +80,7 @@ model InfluencerProfile {
   applications     CampaignApplication[]
   invitations      CampaignInvitation[]
   directHires      DirectHire[]
+  deliverables     CampaignDeliverable[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 }
@@ -135,6 +136,7 @@ model Campaign {
   applications CampaignApplication[]
   invitations  CampaignInvitation[]
   payments     Payment[]
+  deliverables CampaignDeliverable[]
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 }
@@ -154,15 +156,16 @@ enum CampaignStatus {
 }
 
 model CampaignApplication {
-  id           String            @id @default(cuid())
+  id           String               @id @default(cuid())
   campaignId   String
-  campaign     Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign     Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   influencerId String
-  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
-  status       ApplicationStatus @default(PENDING)
+  influencer   InfluencerProfile    @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  status       ApplicationStatus    @default(PENDING)
   pitch        String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  deliverable  CampaignDeliverable?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
   @@unique([campaignId, influencerId])
 }
@@ -196,20 +199,21 @@ enum InvitationStatus {
 }
 
 model DirectHire {
-  id           String           @id @default(cuid())
+  id           String               @id @default(cuid())
   brandId      String
-  brand        BrandProfile     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brand        BrandProfile         @relation(fields: [brandId], references: [id], onDelete: Cascade)
   influencerId String
-  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  influencer   InfluencerProfile    @relation(fields: [influencerId], references: [id], onDelete: Cascade)
   title        String
   description  String
   budget       Float
   deliverables String
   deadline     DateTime?
-  status       DirectHireStatus @default(PENDING)
+  status       DirectHireStatus     @default(PENDING)
   brandMessage String?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  deliverable  CampaignDeliverable?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 }
 
 enum DirectHireStatus {
@@ -266,4 +270,67 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+enum DeliverableStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model CampaignDeliverable {
+  id           String               @id @default(cuid())
+  trackingCode String               @unique @default(cuid())
+  targetUrl    String
+  agreedBudget Float?
+
+  campaignId    String?
+  campaign      Campaign?            @relation(fields: [campaignId], references: [id])
+  applicationId String?              @unique
+  application   CampaignApplication? @relation(fields: [applicationId], references: [id])
+  directHireId  String?              @unique
+  directHire    DirectHire?          @relation(fields: [directHireId], references: [id])
+
+  influencerId String
+  influencer   InfluencerProfile    @relation(fields: [influencerId], references: [id])
+
+  ytVideoId    String?
+  ytViews      Int                  @default(0)
+  ytLikes      Int                  @default(0)
+  ytComments   Int                  @default(0)
+  ytLastSynced DateTime?
+
+  reportedReach       Int?
+  reportedImpressions Int?
+  reportedLikes       Int?
+  reportedComments    Int?
+  reportedShares      Int?
+  reportedSaves       Int?
+
+  totalClicks  Int                  @default(0)
+  uniqueClicks Int                  @default(0)
+
+  conversions  Int                  @default(0)
+  revenue      Float                @default(0)
+
+  status       DeliverableStatus    @default(ACTIVE)
+  submittedAt  DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  clicks       DeliverableClick[]
+
+  @@index([campaignId])
+  @@index([influencerId])
+}
+
+model DeliverableClick {
+  id            String              @id @default(cuid())
+  deliverableId String
+  deliverable   CampaignDeliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  clickedAt     DateTime            @default(now())
+  ipHash        String
+
+  @@index([deliverableId, clickedAt])
+  @@index([deliverableId, ipHash])
 }

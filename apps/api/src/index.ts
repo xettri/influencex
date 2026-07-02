@@ -14,6 +14,7 @@ import hireRoutes from "./routes/hires.js";
 import adminRoutes from "./routes/admin.js";
 import notificationsRoutes from "./routes/notifications.js";
 import analyticsRoutes from "./routes/analytics.js";
+import deliverableRoutes, { handleTrackingRedirect } from "./routes/deliverables.js";
 import { sendError } from "./utils/response.js";
 
 const fastify = Fastify({
@@ -56,6 +57,18 @@ async function bootstrap() {
   await fastify.register(adminRoutes, { prefix: "/api/v1/admin" });
   await fastify.register(notificationsRoutes, { prefix: "/api/v1/notifications" });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
+  await fastify.register(deliverableRoutes, { prefix: "/api/v1/deliverables" });
+
+  // Collaboration tracking link redirect
+  fastify.get<{ Params: { code: string } }>("/l/:code", async (req, reply) => {
+    const targetUrl = await handleTrackingRedirect(
+      fastify.prisma as unknown as Parameters<typeof handleTrackingRedirect>[0],
+      req.params.code,
+      req.ip
+    );
+    if (!targetUrl) return reply.code(404).send({ error: "Link not found" });
+    return reply.redirect(targetUrl, 302);
+  });
 
   fastify.setErrorHandler((error: { statusCode?: number; message: string }, _request, reply) => {
     fastify.log.error(error);

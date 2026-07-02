@@ -3,11 +3,13 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, CheckCircle2, Clock, Circle, Loader2, Send, Users,
-  ChevronDown, ChevronUp, ExternalLink, Megaphone, CalendarDays, ShieldCheck,
+  ChevronDown, ChevronUp, ExternalLink, Megaphone, CalendarDays, ShieldCheck, BarChart3,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
+import type { CampaignMetrics } from "@influencex/shared";
+import { CampaignFunnelMetrics } from "@/components/dashboard/CampaignFunnelMetrics";
 
 type CampaignStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED" | "CANCELLED";
 type AppStatus = "PENDING" | "SHORTLISTED" | "APPROVED" | "REJECTED" | "WITHDRAWN";
@@ -239,6 +241,9 @@ export function CampaignDetailPage() {
   const [pitch, setPitch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [actingAppId, setActingAppId] = useState<string | null>(null);
+  const [brandTab, setBrandTab] = useState<"applications" | "metrics">("applications");
+  const [metrics, setMetrics] = useState<CampaignMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
 
   const isBrand = user?.role === "BRAND";
 
@@ -274,6 +279,24 @@ export function CampaignDetailPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const loadMetrics = async () => {
+    if (!id) return;
+    setMetricsLoading(true);
+    try {
+      const data = await api.get<CampaignMetrics>(`/api/v1/deliverables/campaigns/${id}/metrics`);
+      setMetrics(data);
+    } catch {
+      toast.error("Failed to load campaign metrics");
+    } finally {
+      setMetricsLoading(false);
+    }
+  };
+
+  const handleBrandTabChange = (tab: "applications" | "metrics") => {
+    setBrandTab(tab);
+    if (tab === "metrics" && !metrics) loadMetrics();
   };
 
   const handleStatusChange = async (appId: string, status: AppStatus) => {
@@ -492,51 +515,94 @@ export function CampaignDetailPage() {
         </motion.div>
       )}
 
-      {/* ── BRAND VIEW: Applications ── */}
+      {/* ── BRAND VIEW: Applications + Metrics ── */}
       {isBrand && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-[15px] text-ink">
-              Applications <span className="text-ink/40 font-normal ml-1">({applications.length})</span>
-            </h2>
+          {/* Brand top tabs */}
+          <div className="flex gap-1 mb-5 bg-black/[0.03] p-1 rounded-xl w-fit">
+            <button
+              type="button"
+              onClick={() => handleBrandTabChange("applications")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+                brandTab === "applications" ? "bg-white shadow-sm text-ink" : "text-ink/50 hover:text-ink"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              Applications <span className="text-ink/40 font-normal">({applications.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBrandTabChange("metrics")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+                brandTab === "metrics" ? "bg-white shadow-sm text-ink" : "text-ink/50 hover:text-ink"
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              Metrics
+            </button>
           </div>
 
-          {/* Filter tabs */}
-          <div className="flex gap-1.5 mb-4 overflow-x-auto pb-0.5">
-            {(["ALL", "PENDING", "SHORTLISTED", "APPROVED", "REJECTED"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all ${
-                  filterStatus === s
-                    ? "bg-violet-50 border border-violet-200 text-violet-700"
-                    : "bg-black/[0.03] text-ink/50 hover:text-ink hover:bg-black/[0.06] border border-transparent"
-                }`}
-              >
-                {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()} ({filterCounts[s] ?? 0})
-              </button>
-            ))}
-          </div>
+          <AnimatePresence mode="wait">
+            {brandTab === "applications" ? (
+              <motion.div key="apps" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {/* Filter tabs */}
+                <div className="flex gap-1.5 mb-4 overflow-x-auto pb-0.5">
+                  {(["ALL", "PENDING", "SHORTLISTED", "APPROVED", "REJECTED"] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setFilterStatus(s)}
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-all ${
+                        filterStatus === s
+                          ? "bg-violet-50 border border-violet-200 text-violet-700"
+                          : "bg-black/[0.03] text-ink/50 hover:text-ink hover:bg-black/[0.06] border border-transparent"
+                      }`}
+                    >
+                      {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()} ({filterCounts[s] ?? 0})
+                    </button>
+                  ))}
+                </div>
 
-          {filteredApps.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-black/6 py-16 text-center">
-              <CalendarDays className="w-8 h-8 text-ink/20 mx-auto mb-3" />
-              <p className="text-[14px] font-semibold text-ink mb-1">No applications {filterStatus !== "ALL" ? `with status "${filterStatus}"` : "yet"}</p>
-              <p className="text-[12px] text-ink-muted">Once influencers apply, their pitches will appear here.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredApps.map((app) => (
-                <ApplicationCard
-                  key={app.id}
-                  app={app}
-                  onStatusChange={handleStatusChange}
-                  acting={actingAppId === app.id}
-                />
-              ))}
-            </div>
-          )}
+                {filteredApps.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-black/6 py-16 text-center">
+                    <CalendarDays className="w-8 h-8 text-ink/20 mx-auto mb-3" />
+                    <p className="text-[14px] font-semibold text-ink mb-1">No applications {filterStatus !== "ALL" ? `with status "${filterStatus}"` : "yet"}</p>
+                    <p className="text-[12px] text-ink-muted">Once influencers apply, their pitches will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredApps.map((app) => (
+                      <ApplicationCard
+                        key={app.id}
+                        app={app}
+                        onStatusChange={handleStatusChange}
+                        acting={actingAppId === app.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div key="metrics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {metricsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => <div key={i} className="h-32 rounded-2xl bg-white border border-black/6 animate-pulse" />)}
+                  </div>
+                ) : metrics ? (
+                  <CampaignFunnelMetrics
+                    metrics={metrics}
+                    onRefresh={loadMetrics}
+                  />
+                ) : (
+                  <div className="bg-white rounded-2xl border border-black/6 py-16 text-center">
+                    <BarChart3 className="w-8 h-8 text-ink/20 mx-auto mb-3" />
+                    <p className="text-[14px] font-semibold text-ink mb-1">No metrics yet</p>
+                    <p className="text-[12px] text-ink-muted">Creators need to submit their deliverables with content links to see funnel data here.</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </div>

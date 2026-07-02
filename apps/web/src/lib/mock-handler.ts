@@ -502,6 +502,162 @@ export async function mockRequest<T>(
     return platform as T;
   }
 
+  // ── DELIVERABLES ──────────────────────────────────────────────────────────
+
+  if (method === "GET" && pathname === "/api/v1/deliverables/my") {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+    return db.deliverables.filter((d) => d.influencerId === "mock-influencer-001") as T;
+  }
+
+  if (method === "POST" && pathname === "/api/v1/deliverables") {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+    const { targetUrl, agreedBudget, applicationId, directHireId } = body as Record<string, unknown>;
+    if (!targetUrl) throw mkError(400, "targetUrl is required");
+    if (!applicationId && !directHireId) throw mkError(400, "applicationId or directHireId required");
+    // Check for existing deliverable
+    const existing = db.deliverables.find(
+      (d) => (applicationId && d.applicationId === applicationId) || (directHireId && d.directHireId === directHireId)
+    );
+    if (existing) throw mkError(409, "Deliverable already exists");
+    const campaign = db.campaigns.find((c) => c.id === (db.applications.find(a => a.id === applicationId)?.campaignId));
+    const newDlv = {
+      id: mockId(),
+      trackingCode: `dlv-${mockId()}`,
+      targetUrl: String(targetUrl),
+      agreedBudget: agreedBudget != null ? Number(agreedBudget) : null,
+      campaignId: campaign?.id ?? null,
+      applicationId: applicationId ? String(applicationId) : null,
+      directHireId: directHireId ? String(directHireId) : null,
+      influencerId: "mock-influencer-001",
+      influencer: { id: "mock-influencer-001", displayName: "Priya Sharma", avatar: null },
+      campaign: campaign ? { id: campaign.id, title: campaign.title, brand: { name: "Zara Lifestyle" } } : null,
+      ytVideoId: null as string | null,
+      ytViews: 0,
+      ytLikes: 0,
+      ytComments: 0,
+      ytLastSynced: null as string | null,
+      reportedReach: null as number | null,
+      reportedImpressions: null as number | null,
+      reportedLikes: null as number | null,
+      reportedComments: null as number | null,
+      reportedShares: null as number | null,
+      reportedSaves: null as number | null,
+      totalClicks: 0,
+      uniqueClicks: 0,
+      conversions: 0,
+      revenue: 0,
+      status: "ACTIVE" as import("@influencex/shared").DeliverableStatus,
+      submittedAt: null as string | null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    db.deliverables.push(newDlv);
+    return newDlv as T;
+  }
+
+  const dlvReportMatch = pathname.match(/^\/api\/v1\/deliverables\/([^/]+)\/report$/);
+  if (method === "PATCH" && dlvReportMatch) {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+    const dlv = db.deliverables.find((d) => d.id === dlvReportMatch[1]);
+    if (!dlv || dlv.influencerId !== "mock-influencer-001") throw mkError(404, "Deliverable not found");
+    const { ytVideoUrl, reportedReach, reportedImpressions, reportedLikes, reportedComments, reportedShares, reportedSaves } = body as Record<string, unknown>;
+    if (ytVideoUrl) {
+      const match = String(ytVideoUrl).match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)?([A-Za-z0-9_-]{11})/);
+      const videoId = match ? match[1] : null;
+      dlv.ytVideoId = videoId;
+      dlv.ytViews = Math.floor(5000 + Math.random() * 50000);
+      dlv.ytLikes = Math.floor(dlv.ytViews * 0.04);
+      dlv.ytComments = Math.floor(dlv.ytViews * 0.004);
+      dlv.ytLastSynced = new Date().toISOString();
+    }
+    if (reportedReach != null) dlv.reportedReach = Number(reportedReach);
+    if (reportedImpressions != null) dlv.reportedImpressions = Number(reportedImpressions);
+    if (reportedLikes != null) dlv.reportedLikes = Number(reportedLikes);
+    if (reportedComments != null) dlv.reportedComments = Number(reportedComments);
+    if (reportedShares != null) dlv.reportedShares = Number(reportedShares);
+    if (reportedSaves != null) dlv.reportedSaves = Number(reportedSaves);
+    dlv.submittedAt = dlv.submittedAt ?? new Date().toISOString();
+    dlv.updatedAt = new Date().toISOString();
+    return dlv as T;
+  }
+
+  const dlvConversionsMatch = pathname.match(/^\/api\/v1\/deliverables\/([^/]+)\/conversions$/);
+  if (method === "PATCH" && dlvConversionsMatch) {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    const dlv = db.deliverables.find((d) => d.id === dlvConversionsMatch[1]);
+    if (!dlv) throw mkError(404, "Deliverable not found");
+    const { conversions, revenue } = body as Record<string, unknown>;
+    if (conversions != null) dlv.conversions = Number(conversions);
+    if (revenue != null) dlv.revenue = Number(revenue);
+    dlv.updatedAt = new Date().toISOString();
+    return dlv as T;
+  }
+
+  const dlvSyncMatch = pathname.match(/^\/api\/v1\/deliverables\/([^/]+)\/sync$/);
+  if (method === "POST" && dlvSyncMatch) {
+    const dlv = db.deliverables.find((d) => d.id === dlvSyncMatch[1]);
+    if (!dlv) throw mkError(404, "Deliverable not found");
+    if (!dlv.ytVideoId) throw mkError(400, "No YouTube video linked");
+    dlv.ytViews = dlv.ytViews + Math.floor(Math.random() * 500);
+    dlv.ytLikes = dlv.ytLikes + Math.floor(Math.random() * 20);
+    dlv.ytComments = dlv.ytComments + Math.floor(Math.random() * 3);
+    dlv.ytLastSynced = new Date().toISOString();
+    dlv.updatedAt = new Date().toISOString();
+    return dlv as T;
+  }
+
+  const campDeliverableMatch = pathname.match(/^\/api\/v1\/deliverables\/campaigns\/([^/]+)$/);
+  if (method === "GET" && campDeliverableMatch) {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    return db.deliverables.filter((d) => d.campaignId === campDeliverableMatch[1]) as T;
+  }
+
+  const campMetricsMatch = pathname.match(/^\/api\/v1\/deliverables\/campaigns\/([^/]+)\/metrics$/);
+  if (method === "GET" && campMetricsMatch) {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    const campaignId = campMetricsMatch[1];
+    const campaign = db.campaigns.find((c) => c.id === campaignId);
+    if (!campaign) throw mkError(404, "Campaign not found");
+    const deliverables = db.deliverables.filter((d) => d.campaignId === campaignId);
+    const budgetBase = deliverables.reduce((s, d) => s + (d.agreedBudget ?? 0), 0) || campaign.budget;
+    const totalReach = deliverables.reduce((s, d) => s + (d.reportedReach ?? 0), 0);
+    const totalImpressions = deliverables.reduce((s, d) => s + (d.reportedImpressions ?? 0) + d.ytViews, 0);
+    const totalClicks = deliverables.reduce((s, d) => s + d.totalClicks, 0);
+    const totalConversions = deliverables.reduce((s, d) => s + d.conversions, 0);
+    const totalRevenue = deliverables.reduce((s, d) => s + d.revenue, 0);
+    const likes = deliverables.reduce((s, d) => s + (d.ytViews > 0 ? d.ytLikes : (d.reportedLikes ?? 0)), 0);
+    const comments = deliverables.reduce((s, d) => s + (d.ytViews > 0 ? d.ytComments : (d.reportedComments ?? 0)), 0);
+    const shares = deliverables.reduce((s, d) => s + (d.reportedShares ?? 0), 0);
+    const saves = deliverables.reduce((s, d) => s + (d.reportedSaves ?? 0), 0);
+    const totalEngagements = likes + comments + shares + saves;
+    return {
+      campaign: { id: campaign.id, title: campaign.title, budget: campaign.budget, budgetType: campaign.budgetType },
+      deliverables,
+      funnel: {
+        budgetBase,
+        top: {
+          totalReach,
+          totalImpressions,
+          cpm: totalImpressions > 0 ? (budgetBase / totalImpressions) * 1000 : null,
+        },
+        middle: {
+          totalEngagements,
+          totalClicks,
+          cpe: totalEngagements > 0 ? budgetBase / totalEngagements : null,
+          cpc: totalClicks > 0 ? budgetBase / totalClicks : null,
+          ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : null,
+          breakdown: { likes, comments, shares, saves },
+        },
+        bottom: {
+          totalConversions,
+          totalRevenue,
+          cpa: totalConversions > 0 ? budgetBase / totalConversions : null,
+          roas: budgetBase > 0 ? totalRevenue / budgetBase : null,
+        },
+      },
+    } as T;
+  }
+
   // ── ANALYTICS ─────────────────────────────────────────────────────────────
 
   if (method === "GET" && pathname === "/api/v1/analytics/brand") {

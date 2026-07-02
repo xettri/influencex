@@ -1,7 +1,7 @@
 // In-memory mock database — mutated by mock-handler for stateful interactions.
 // Resets on page refresh (acceptable for demo purposes).
 
-import type { VerificationStatus, ApplicationStatus, NotificationType, PlatformName } from "@influencex/shared";
+import type { VerificationStatus, ApplicationStatus, NotificationType, PlatformName, DeliverableStatus } from "@influencex/shared";
 
 interface MockNotification {
   id: string;
@@ -256,7 +256,7 @@ export const db = {
       id: "mock-app-001",
       campaignId: "mock-camp-001",
       influencerId: "mock-influencer-001",
-      status: "PENDING" as ApplicationStatus,
+      status: "APPROVED" as ApplicationStatus,
       pitch: "I would love to collaborate on the Summer Collection campaign! Fashion is my niche and I have a highly engaged audience in Mumbai. My Instagram reels average 15K+ views.",
       createdAt: "2025-06-20T10:00:00Z",
       campaign: {
@@ -442,6 +442,71 @@ export const db = {
 
     "mock-user-admin-001": [] as MockNotification[],
   },
+
+  deliverables: [
+    {
+      id: "mock-dlv-001",
+      trackingCode: "dlv-priya-zara-summer25",
+      targetUrl: "https://zaralifestyle.com/summer2025",
+      agreedBudget: 25000 as number | null,
+      campaignId: "mock-camp-001" as string | null,
+      applicationId: "mock-app-001" as string | null,
+      directHireId: null as string | null,
+      influencerId: "mock-influencer-001",
+      influencer: { id: "mock-influencer-001", displayName: "Priya Sharma", avatar: null as string | null },
+      campaign: { id: "mock-camp-001", title: "Summer Fashion Collection 2025", brand: { name: "Zara Lifestyle" } } as { id: string; title: string; brand: { name: string } } | null,
+      ytVideoId: "dQw4w9WgXcQ" as string | null,
+      ytViews: 45230,
+      ytLikes: 2341,
+      ytComments: 187,
+      ytLastSynced: "2026-06-20T14:30:00Z" as string | null,
+      reportedReach: 125000 as number | null,
+      reportedImpressions: 89000 as number | null,
+      reportedLikes: 2341 as number | null,
+      reportedComments: 187 as number | null,
+      reportedShares: 450 as number | null,
+      reportedSaves: 1230 as number | null,
+      totalClicks: 3847,
+      uniqueClicks: 2891,
+      conversions: 12,
+      revenue: 18000,
+      status: "ACTIVE" as DeliverableStatus,
+      submittedAt: "2026-06-18T10:00:00Z" as string | null,
+      createdAt: "2026-06-01T10:00:00Z",
+      updatedAt: "2026-06-20T14:30:00Z",
+    },
+    {
+      id: "mock-dlv-002",
+      trackingCode: "dlv-aisha-zara-summer25",
+      targetUrl: "https://zaralifestyle.com/summer2025",
+      agreedBudget: 55000 as number | null,
+      campaignId: "mock-camp-001" as string | null,
+      applicationId: "mock-app-003" as string | null,
+      directHireId: null as string | null,
+      influencerId: "mock-influencer-003",
+      influencer: { id: "mock-influencer-003", displayName: "Aisha Khan", avatar: null as string | null },
+      campaign: { id: "mock-camp-001", title: "Summer Fashion Collection 2025", brand: { name: "Zara Lifestyle" } } as { id: string; title: string; brand: { name: string } } | null,
+      ytVideoId: null as string | null,
+      ytViews: 0,
+      ytLikes: 0,
+      ytComments: 0,
+      ytLastSynced: null as string | null,
+      reportedReach: 380000 as number | null,
+      reportedImpressions: 210000 as number | null,
+      reportedLikes: 18200 as number | null,
+      reportedComments: 870 as number | null,
+      reportedShares: 3240 as number | null,
+      reportedSaves: 8900 as number | null,
+      totalClicks: 12500,
+      uniqueClicks: 9800,
+      conversions: 89,
+      revenue: 134000,
+      status: "ACTIVE" as DeliverableStatus,
+      submittedAt: "2026-06-19T12:00:00Z" as string | null,
+      createdAt: "2026-06-01T10:00:00Z",
+      updatedAt: "2026-06-19T12:00:00Z",
+    },
+  ],
 
   // The logged-in creator's own editable profile
   influencerProfile: {

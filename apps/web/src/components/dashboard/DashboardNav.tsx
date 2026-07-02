@@ -13,6 +13,7 @@ import {
   UserCircle,
   ShieldCheck,
   Bell,
+  Link2,
 } from "lucide-react";
 import type { AuthUser } from "@/store/auth";
 import { useNotificationStore } from "@/store/notifications";
@@ -31,6 +32,7 @@ const creatorLinks = [
   { icon: LayoutDashboard, label: "Overview", to: "/dashboard" },
   { icon: Search, label: "Browse Campaigns", to: "/dashboard/explore" },
   { icon: Bookmark, label: "My Applications", to: "/dashboard/applications" },
+  { icon: Link2, label: "Deliverables", to: "/dashboard/deliverables" },
   { icon: Briefcase, label: "Hire Requests", to: "/dashboard/hires" },
   { icon: Bell, label: "Notifications", to: "/dashboard/notifications" },
   { icon: UserCircle, label: "My Profile", to: "/dashboard/profile" },

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Bell, CheckCheck, Trash2, Megaphone, CheckCircle2, ShieldCheck, Briefcase, X,
+  Bell, CheckCheck, Trash2, Megaphone, CheckCircle2, ShieldCheck, Briefcase, X, DollarSign,
 } from "lucide-react";
 import type { Notification, NotificationType } from "@influencex/shared";
 import { useNotificationStore } from "@/store/notifications";
@@ -17,6 +17,9 @@ const TYPE_META: Record<NotificationType, { icon: typeof Bell; color: string; la
   HIRE_REQUEST:            { icon: Briefcase,    color: "bg-amber-50 text-amber-600 border-amber-200",      label: "Hire request" },
   HIRE_ACCEPTED:           { icon: Briefcase,    color: "bg-emerald-50 text-emerald-600 border-emerald-200",label: "Hire accepted" },
   HIRE_DECLINED:           { icon: Briefcase,    color: "bg-red-50 text-red-500 border-red-200",            label: "Hire declined" },
+  PAYMENT_LOCKED:          { icon: DollarSign,   color: "bg-blue-50 text-blue-600 border-blue-200",         label: "Payment locked" },
+  PAYMENT_RELEASED:        { icon: DollarSign,   color: "bg-emerald-50 text-emerald-600 border-emerald-200", label: "Payment released" },
+  PAYMENT_DISPUTED:        { icon: DollarSign,   color: "bg-red-50 text-red-500 border-red-200",            label: "Payment disputed" },
 };
 
 function timeAgo(dateStr: string): string {

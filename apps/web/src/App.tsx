@@ -61,6 +61,9 @@ const AnalyticsPage = lazy(() =>
 const DeliverablesPage = lazy(() =>
   import("@/pages/dashboard/DeliverablesPage").then((m) => ({ default: m.DeliverablesPage }))
 );
+const EarningsPage = lazy(() =>
+  import("@/pages/dashboard/EarningsPage").then((m) => ({ default: m.EarningsPage }))
+);
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
@@ -135,6 +138,10 @@ export default function App() {
             <Route
               path="/dashboard/deliverables"
               element={<DashboardShell><DeliverablesPage /></DashboardShell>}
+            />
+            <Route
+              path="/dashboard/earnings"
+              element={<DashboardShell><EarningsPage /></DashboardShell>}
             />
             <Route
               path="/dashboard/*"

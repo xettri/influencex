@@ -15,6 +15,7 @@ import adminRoutes from "./routes/admin.js";
 import notificationsRoutes from "./routes/notifications.js";
 import analyticsRoutes from "./routes/analytics.js";
 import deliverableRoutes, { handleTrackingRedirect } from "./routes/deliverables.js";
+import paymentsRoutes from "./routes/payments.js";
 import { sendError } from "./utils/response.js";
 
 const fastify = Fastify({
@@ -58,6 +59,7 @@ async function bootstrap() {
   await fastify.register(notificationsRoutes, { prefix: "/api/v1/notifications" });
   await fastify.register(analyticsRoutes, { prefix: "/api/v1/analytics" });
   await fastify.register(deliverableRoutes, { prefix: "/api/v1/deliverables" });
+  await fastify.register(paymentsRoutes, { prefix: "/api/v1/payments" });
 
   // Collaboration tracking link redirect
   fastify.get<{ Params: { code: string } }>("/l/:code", async (req, reply) => {

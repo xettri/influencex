@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, CheckCircle2, Clock, Circle, Loader2, Send, Users,
   ChevronDown, ChevronUp, ExternalLink, Megaphone, CalendarDays, ShieldCheck, BarChart3,
+  Lock, Unlock, IndianRupee,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
-import type { CampaignMetrics } from "@influencex/shared";
+import type { CampaignMetrics, Payment } from "@influencex/shared";
 import { CampaignFunnelMetrics } from "@/components/dashboard/CampaignFunnelMetrics";
 
 type CampaignStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED" | "CANCELLED";
@@ -97,11 +98,58 @@ function ApplicationCard({
   app,
   onStatusChange,
   acting,
+  payment,
+  onPaymentLocked,
+  onPaymentReleased,
 }: {
   app: ApplicationItem;
   onStatusChange: (appId: string, status: AppStatus) => void;
   acting: boolean;
+  payment?: Payment;
+  onPaymentLocked?: (appId: string, payment: Payment) => void;
+  onPaymentReleased?: (appId: string, payment: Payment) => void;
 }) {
+  const [showLockForm, setShowLockForm] = useState(false);
+  const [lockAmount, setLockAmount] = useState("");
+  const [lockNotes, setLockNotes] = useState("");
+  const [locking, setLocking] = useState(false);
+  const [releasing, setReleasing] = useState(false);
+
+  const handleLock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(lockAmount);
+    if (!amount || amount <= 0) { toast.error("Enter a valid amount"); return; }
+    setLocking(true);
+    try {
+      const p = await api.post<Payment>("/api/v1/payments", {
+        applicationId: app.id,
+        amount,
+        type: "FLAT_FEE",
+        notes: lockNotes || undefined,
+      });
+      toast.success(`₹${amount.toLocaleString("en-IN")} locked in escrow`);
+      setShowLockForm(false);
+      onPaymentLocked?.(app.id, p);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to lock payment");
+    } finally {
+      setLocking(false);
+    }
+  };
+
+  const handleRelease = async () => {
+    if (!payment) return;
+    setReleasing(true);
+    try {
+      const updated = await api.patch<Payment>(`/api/v1/payments/${payment.id}/release`, {});
+      toast.success("Payment released to creator");
+      onPaymentReleased?.(app.id, updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to release payment");
+    } finally {
+      setReleasing(false);
+    }
+  };
   const [expanded, setExpanded] = useState(false);
   const inf = app.influencer!;
   const initials = inf.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -210,6 +258,38 @@ function ApplicationCard({
                     Reject
                   </button>
                 )}
+                {/* Payment actions for APPROVED applications */}
+                {app.status === "APPROVED" && !payment && (
+                  <button
+                    type="button"
+                    onClick={() => setShowLockForm((v) => !v)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold hover:bg-blue-100 transition-colors"
+                  >
+                    <Lock className="w-3 h-3" /> Lock Payment
+                  </button>
+                )}
+                {payment?.status === "LOCKED" && (
+                  <button
+                    type="button"
+                    onClick={handleRelease}
+                    disabled={releasing}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold hover:bg-emerald-100 transition-colors disabled:opacity-60"
+                  >
+                    {releasing ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Unlock className="w-3 h-3" /> Release</>}
+                  </button>
+                )}
+                {payment?.status === "LOCKED" && (
+                  <span className="flex items-center gap-1 text-[10px] text-blue-600 font-semibold">
+                    <IndianRupee className="w-2.5 h-2.5" />
+                    ₹{payment.amount.toLocaleString("en-IN")} in escrow
+                  </span>
+                )}
+                {payment?.status === "RELEASED" && (
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    ₹{payment.amount.toLocaleString("en-IN")} released
+                  </span>
+                )}
               </>
             )}
 
@@ -220,6 +300,40 @@ function ApplicationCard({
               View profile <ExternalLink className="w-3 h-3" />
             </Link>
           </div>
+
+          {/* Lock payment inline form */}
+          {showLockForm && app.status === "APPROVED" && !payment && (
+            <form onSubmit={handleLock} className="mt-3 pt-3 border-t border-black/5 space-y-2">
+              <p className="text-[11px] font-bold text-ink">Lock payment into escrow</p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-ink-muted font-semibold">₹</span>
+                  <input
+                    type="number"
+                    value={lockAmount}
+                    onChange={(e) => setLockAmount(e.target.value)}
+                    min={1}
+                    step={100}
+                    placeholder="Amount"
+                    className="input-light text-[12px] pl-6 w-full py-2"
+                  />
+                </div>
+                <button type="submit" disabled={locking} className="btn-primary text-[12px] py-2 px-3 disabled:opacity-60">
+                  {locking ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Lock className="w-3 h-3" /> Lock</>}
+                </button>
+                <button type="button" onClick={() => setShowLockForm(false)} className="text-[11px] font-semibold text-ink-muted hover:text-ink">
+                  Cancel
+                </button>
+              </div>
+              <input
+                type="text"
+                value={lockNotes}
+                onChange={(e) => setLockNotes(e.target.value)}
+                placeholder="Notes (optional)"
+                className="input-light text-[12px] w-full py-2"
+              />
+            </form>
+          )}
         </div>
       </div>
     </motion.div>
@@ -244,6 +358,7 @@ export function CampaignDetailPage() {
   const [brandTab, setBrandTab] = useState<"applications" | "metrics">("applications");
   const [metrics, setMetrics] = useState<CampaignMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  const [paymentsByAppId, setPaymentsByAppId] = useState<Record<string, Payment>>({});
 
   const isBrand = user?.role === "BRAND";
 
@@ -253,8 +368,14 @@ export function CampaignDetailPage() {
       .then(async (camp) => {
         setCampaign(camp);
         if (isBrand) {
-          const apps = await api.get<ApplicationItem[]>(`/api/v1/campaigns/${id}/applications`).catch(() => []);
+          const [apps, payments] = await Promise.all([
+            api.get<ApplicationItem[]>(`/api/v1/campaigns/${id}/applications`).catch(() => [] as ApplicationItem[]),
+            api.get<Payment[]>("/api/v1/payments/sent").catch(() => [] as Payment[]),
+          ]);
           setApplications(apps);
+          const byAppId: Record<string, Payment> = {};
+          for (const p of payments) { if (p.applicationId) byAppId[p.applicationId] = p; }
+          setPaymentsByAppId(byAppId);
         } else {
           const myApps = await api.get<ApplicationItem[]>("/api/v1/campaigns/applications/my").catch(() => []);
           setUserApp(myApps.find((a) => a.campaignId === id) ?? null);
@@ -577,6 +698,9 @@ export function CampaignDetailPage() {
                         app={app}
                         onStatusChange={handleStatusChange}
                         acting={actingAppId === app.id}
+                        payment={paymentsByAppId[app.id]}
+                        onPaymentLocked={(appId, p) => setPaymentsByAppId((prev) => ({ ...prev, [appId]: p }))}
+                        onPaymentReleased={(appId, p) => setPaymentsByAppId((prev) => ({ ...prev, [appId]: p }))}
                       />
                     ))}
                   </div>

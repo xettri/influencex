@@ -658,6 +658,119 @@ export async function mockRequest<T>(
     } as T;
   }
 
+  // ── PAYMENTS ──────────────────────────────────────────────────────────────
+
+  if (method === "POST" && pathname === "/api/v1/payments") {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    const { applicationId, directHireId, amount, type, notes } = body as Record<string, unknown>;
+    if (!amount || Number(amount) <= 0) throw mkError(400, "amount must be a positive number");
+    if (!applicationId && !directHireId) throw mkError(400, "applicationId or directHireId required");
+
+    // Check for existing payment
+    const existing = db.payments.find(
+      (p) => (applicationId && p.applicationId === applicationId) || (directHireId && p.directHireId === directHireId)
+    );
+    if (existing) throw mkError(409, "Payment already locked");
+
+    let influencerId: string | null = null;
+    let campaignId: string | null = null;
+    let campaign: { id: string; title: string; brand: { name: string } } | null = null;
+    let directHireObj: { id: string; title: string } | null = null;
+
+    if (applicationId) {
+      const app = db.applications.find((a) => a.id === applicationId);
+      if (!app) throw mkError(404, "Application not found");
+      if (app.status !== "APPROVED") throw mkError(400, "Application must be APPROVED");
+      influencerId = app.influencerId;
+      campaignId = app.campaignId;
+      const camp = db.campaigns.find((c) => c.id === campaignId);
+      if (camp) campaign = { id: camp.id, title: camp.title, brand: { name: camp.brand.name } };
+    }
+
+    if (directHireId) {
+      const hire = db.hires.find((h) => h.id === directHireId);
+      if (!hire) throw mkError(404, "Hire not found");
+      if (!["ACCEPTED", "IN_PROGRESS"].includes(hire.status)) throw mkError(400, "Hire must be active");
+      influencerId = hire.influencerId;
+      directHireObj = { id: hire.id, title: hire.title };
+    }
+
+    const newPayment = {
+      id: mockId(),
+      campaignId,
+      applicationId: applicationId ? String(applicationId) : null,
+      directHireId: directHireId ? String(directHireId) : null,
+      influencerId,
+      amount: Number(amount),
+      status: "LOCKED" as import("@influencex/shared").PaymentStatus,
+      type: (type ? String(type) : "FLAT_FEE") as import("@influencex/shared").PaymentType,
+      lockedAt: new Date().toISOString() as string | null,
+      releasedAt: null as string | null,
+      releaseAfter: null as string | null,
+      notes: notes ? String(notes) : null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      campaign,
+      influencer: influencerId
+        ? db.payments.find((p) => p.influencerId === influencerId)?.influencer ??
+          (() => { const inf = db.influencerProfile; return inf.id === influencerId ? { id: inf.id, displayName: inf.displayName } : null; })()
+        : null,
+      directHire: directHireObj,
+    };
+    db.payments.push(newPayment as (typeof db.payments)[number]);
+
+    addNotification(
+      "mock-user-creator-001",
+      "PAYMENT_LOCKED",
+      "Payment locked — funds in escrow",
+      `₹${Number(amount).toLocaleString("en-IN")} has been locked in escrow for your collaboration.`,
+      "/dashboard/earnings"
+    );
+
+    return newPayment as T;
+  }
+
+  if (method === "GET" && pathname === "/api/v1/payments/my") {
+    if (!user || user.role !== "INFLUENCER") throw mkError(403, "Creator account required");
+    return db.payments.filter((p) => p.influencerId === "mock-influencer-001") as T;
+  }
+
+  if (method === "GET" && pathname === "/api/v1/payments/sent") {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    return db.payments as T;
+  }
+
+  const payReleaseMatch = pathname.match(/^\/api\/v1\/payments\/([^/]+)\/release$/);
+  if (method === "PATCH" && payReleaseMatch) {
+    if (!user || user.role !== "BRAND") throw mkError(403, "Brand account required");
+    const payment = db.payments.find((p) => p.id === payReleaseMatch[1]);
+    if (!payment) throw mkError(404, "Payment not found");
+    if (payment.status !== "LOCKED") throw mkError(400, "Only LOCKED payments can be released");
+    payment.status = "RELEASED" as import("@influencex/shared").PaymentStatus;
+    payment.releasedAt = new Date().toISOString();
+    payment.updatedAt = new Date().toISOString();
+
+    addNotification(
+      "mock-user-creator-001",
+      "PAYMENT_RELEASED",
+      "Payment released!",
+      `₹${payment.amount.toLocaleString("en-IN")} has been released to you.`,
+      "/dashboard/earnings"
+    );
+
+    return payment as T;
+  }
+
+  const payDisputeMatch = pathname.match(/^\/api\/v1\/payments\/([^/]+)\/dispute$/);
+  if (method === "PATCH" && payDisputeMatch) {
+    const payment = db.payments.find((p) => p.id === payDisputeMatch[1]);
+    if (!payment) throw mkError(404, "Payment not found");
+    payment.status = "DISPUTED" as import("@influencex/shared").PaymentStatus;
+    if (body?.notes) payment.notes = String(body.notes);
+    payment.updatedAt = new Date().toISOString();
+    return payment as T;
+  }
+
   // ── ANALYTICS ─────────────────────────────────────────────────────────────
 
   if (method === "GET" && pathname === "/api/v1/analytics/brand") {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, ArrowRight, Megaphone, CheckCircle2, ShieldCheck, Briefcase, X } from "lucide-react";
+import { Bell, CheckCheck, ArrowRight, Megaphone, CheckCircle2, ShieldCheck, Briefcase, X, DollarSign } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Notification, NotificationType } from "@influencex/shared";
 import { useNotificationStore } from "@/store/notifications";
@@ -15,6 +15,9 @@ const TYPE_META: Record<NotificationType, { icon: typeof Bell; color: string }> 
   HIRE_REQUEST:           { icon: Briefcase,    color: "bg-amber-50 text-amber-600" },
   HIRE_ACCEPTED:          { icon: Briefcase,    color: "bg-emerald-50 text-emerald-600" },
   HIRE_DECLINED:          { icon: Briefcase,    color: "bg-red-50 text-red-500" },
+  PAYMENT_LOCKED:         { icon: DollarSign,   color: "bg-blue-50 text-blue-600" },
+  PAYMENT_RELEASED:       { icon: DollarSign,   color: "bg-emerald-50 text-emerald-600" },
+  PAYMENT_DISPUTED:       { icon: DollarSign,   color: "bg-red-50 text-red-500" },
 };
 
 function timeAgo(dateStr: string): string {

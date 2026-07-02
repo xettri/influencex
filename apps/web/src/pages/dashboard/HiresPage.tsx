@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Clock, Loader2, Briefcase, Play, Package } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2, Briefcase, Play, Package, Lock, Unlock, IndianRupee } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { DirectHireStatus } from "@influencex/shared";
+import type { DirectHireStatus, Payment } from "@influencex/shared";
 import { api } from "@/lib/api";
 import { toast } from "@/store/toast";
 import { useAuthStore } from "@/store/auth";
@@ -17,9 +17,7 @@ interface HireItem {
   status: DirectHireStatus;
   brandMessage: string | null;
   createdAt: string;
-  // brand side: influencer info
   influencer?: { id: string; displayName: string; avatar: string | null; verified: boolean; niche: string[] };
-  // creator side: brand info
   brand?: { id: string; name: string; logo: string | null; verified: boolean; industry: string | null };
 }
 
@@ -32,6 +30,80 @@ const STATUS_CONFIG: Record<DirectHireStatus, { label: string; icon: typeof Cloc
   CANCELLED: { label: "Cancelled", icon: XCircle, classes: "bg-slate-50 border-slate-200 text-slate-600" },
 };
 
+function LockPaymentForm({
+  hireId,
+  defaultAmount,
+  onLocked,
+  onCancel,
+}: {
+  hireId: string;
+  defaultAmount: number;
+  onLocked: (payment: Payment) => void;
+  onCancel: () => void;
+}) {
+  const [amount, setAmount] = useState(String(defaultAmount));
+  const [notes, setNotes] = useState("");
+  const [locking, setLocking] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = parseFloat(amount);
+    if (!parsed || parsed <= 0) { toast.error("Enter a valid amount"); return; }
+    setLocking(true);
+    try {
+      const payment = await api.post<Payment>("/api/v1/payments", {
+        directHireId: hireId,
+        amount: parsed,
+        type: "FLAT_FEE",
+        notes: notes || undefined,
+      });
+      toast.success(`₹${parsed.toLocaleString("en-IN")} locked in escrow`);
+      onLocked(payment);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to lock payment");
+    } finally {
+      setLocking(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 pt-4 border-t border-black/5 space-y-3">
+      <p className="text-[12px] font-bold text-ink">Lock payment into escrow</p>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-ink-muted font-semibold">₹</span>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            min={1}
+            step={100}
+            className="input-light text-[13px] pl-7 w-full"
+            placeholder="Amount"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={locking}
+          className="btn-primary text-[13px] py-2.5 px-4 disabled:opacity-60 shrink-0"
+        >
+          {locking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Lock className="w-3.5 h-3.5" /> Lock</>}
+        </button>
+        <button type="button" onClick={onCancel} className="text-[12px] font-semibold text-ink-muted hover:text-ink transition-colors shrink-0">
+          Cancel
+        </button>
+      </div>
+      <input
+        type="text"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Notes (optional)"
+        className="input-light text-[13px] w-full"
+      />
+    </form>
+  );
+}
+
 export function HiresPage() {
   const { user } = useAuthStore();
   const isBrand = user?.role === "BRAND";
@@ -39,24 +111,62 @@ export function HiresPage() {
   const [hires, setHires] = useState<HireItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [paymentsByHireId, setPaymentsByHireId] = useState<Record<string, Payment>>({});
+  const [showLockFormFor, setShowLockFormFor] = useState<string | null>(null);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<HireItem[]>("/api/v1/hires/my")
-      .then(setHires)
-      .catch(() => toast.error("Failed to load hire requests"))
-      .finally(() => setLoading(false));
-  }, []);
+    const loadAll = async () => {
+      try {
+        const h = await api.get<HireItem[]>("/api/v1/hires/my");
+        setHires(h);
+        if (isBrand) {
+          const payments = await api.get<Payment[]>("/api/v1/payments/sent").catch(() => []);
+          const byHireId: Record<string, Payment> = {};
+          for (const p of payments) {
+            if (p.directHireId) byHireId[p.directHireId] = p;
+          }
+          setPaymentsByHireId(byHireId);
+        }
+      } catch {
+        toast.error("Failed to load hire requests");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAll();
+  }, [isBrand]);
 
   const updateStatus = async (id: string, status: DirectHireStatus) => {
     setUpdatingId(id);
     try {
       await api.patch(`/api/v1/hires/${id}/status`, { status });
       setHires((prev) => prev.map((h) => h.id === id ? { ...h, status } : h));
-      toast.success(`Request ${status.toLowerCase().replace("_", " ")}`);
+      toast.success(`Request ${status.toLowerCase().replace(/_/g, " ")}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handlePaymentLocked = (hireId: string, payment: Payment) => {
+    setPaymentsByHireId((prev) => ({ ...prev, [hireId]: payment }));
+    setShowLockFormFor(null);
+  };
+
+  const handleRelease = async (hireId: string) => {
+    const payment = paymentsByHireId[hireId];
+    if (!payment) return;
+    setReleasingId(hireId);
+    try {
+      const updated = await api.patch<Payment>(`/api/v1/payments/${payment.id}/release`, {});
+      setPaymentsByHireId((prev) => ({ ...prev, [hireId]: updated }));
+      toast.success("Payment released to creator");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to release payment");
+    } finally {
+      setReleasingId(null);
     }
   };
 
@@ -111,6 +221,10 @@ export function HiresPage() {
             const Icon = config.icon;
             const counterpart = isBrand ? hire.influencer : hire.brand;
             const counterpartName = isBrand ? hire.influencer?.displayName : hire.brand?.name;
+            const payment = paymentsByHireId[hire.id];
+            const canLock = isBrand && ["ACCEPTED", "IN_PROGRESS"].includes(hire.status) && !payment;
+            const canRelease = isBrand && payment?.status === "LOCKED";
+            const showingLockForm = showLockFormFor === hire.id;
 
             return (
               <motion.div
@@ -121,7 +235,6 @@ export function HiresPage() {
                 className="bg-white rounded-2xl border border-black/6 p-5"
               >
                 <div className="flex items-start gap-4">
-                  {/* Avatar */}
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white text-[11px] font-extrabold shrink-0">
                     {(counterpartName ?? "?").slice(0, 2).toUpperCase()}
                   </div>
@@ -153,11 +266,27 @@ export function HiresPage() {
                           · Due {new Date(hire.deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                         </span>
                       )}
+                      {/* Payment status badge */}
+                      {payment && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ml-auto ${
+                          payment.status === "RELEASED"
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                            : payment.status === "LOCKED"
+                            ? "bg-blue-50 border-blue-200 text-blue-700"
+                            : payment.status === "DISPUTED"
+                            ? "bg-red-50 border-red-200 text-red-600"
+                            : "bg-amber-50 border-amber-200 text-amber-700"
+                        }`}>
+                          <IndianRupee className="w-2.5 h-2.5" />
+                          {payment.status === "LOCKED" ? "In Escrow" : payment.status === "RELEASED" ? "Released" : payment.status}
+                          {" "}₹{payment.amount.toLocaleString("en-IN")}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Creator actions */}
                 {hire.status === "PENDING" && !isBrand && (
                   <div className="flex gap-2 mt-4 pt-4 border-t border-black/5">
                     <button
@@ -187,6 +316,8 @@ export function HiresPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Brand: cancel pending */}
                 {hire.status === "PENDING" && isBrand && (
                   <div className="flex gap-2 mt-4 pt-4 border-t border-black/5">
                     <button
@@ -196,6 +327,43 @@ export function HiresPage() {
                     >
                       {updatingId === hire.id ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : "Cancel request"}
                     </button>
+                  </div>
+                )}
+
+                {/* Brand: lock payment for accepted/in-progress hires */}
+                {(canLock || canRelease || (isBrand && payment?.status === "RELEASED")) && (
+                  <div className="mt-4 pt-4 border-t border-black/5">
+                    {canLock && !showingLockForm && (
+                      <button
+                        onClick={() => setShowLockFormFor(hire.id)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[12px] font-bold hover:bg-blue-100 transition-colors"
+                      >
+                        <Lock className="w-3.5 h-3.5" /> Lock Payment into Escrow
+                      </button>
+                    )}
+                    {canLock && showingLockForm && (
+                      <LockPaymentForm
+                        hireId={hire.id}
+                        defaultAmount={hire.budget}
+                        onLocked={(payment) => handlePaymentLocked(hire.id, payment)}
+                        onCancel={() => setShowLockFormFor(null)}
+                      />
+                    )}
+                    {canRelease && (
+                      <button
+                        onClick={() => handleRelease(hire.id)}
+                        disabled={releasingId === hire.id}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold hover:bg-emerald-100 transition-colors disabled:opacity-60"
+                      >
+                        {releasingId === hire.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Unlock className="w-3.5 h-3.5" /> Release Payment to Creator</>}
+                      </button>
+                    )}
+                    {isBrand && payment?.status === "RELEASED" && (
+                      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Payment of ₹{payment.amount.toLocaleString("en-IN")} released
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>

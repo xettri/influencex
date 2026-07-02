@@ -12,6 +12,8 @@ export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "FAILED
 
 export type PaymentStatus = "PENDING" | "LOCKED" | "RELEASED" | "DISPUTED" | "REFUNDED";
 
+export type PaymentType = "UPFRONT" | "FLAT_FEE" | "CPA_PAYOUT" | "REFUND";
+
 export type DirectHireStatus = "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "DECLINED" | "CANCELLED";
 
 export interface RateCard {
@@ -255,6 +257,26 @@ export interface CampaignMetrics {
   };
 }
 
+export interface Payment {
+  id: string;
+  campaignId: string | null;
+  influencerId: string | null;
+  applicationId: string | null;
+  directHireId: string | null;
+  amount: number;
+  status: PaymentStatus;
+  type: PaymentType;
+  lockedAt: string | null;
+  releasedAt: string | null;
+  releaseAfter: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  campaign?: { id: string; title: string; brand?: { name: string } } | null;
+  influencer?: { id: string; displayName: string } | null;
+  directHire?: { id: string; title: string } | null;
+}
+
 export type NotificationType =
   | "APPLICATION_RECEIVED"
   | "APPLICATION_SHORTLISTED"
@@ -264,7 +286,10 @@ export type NotificationType =
   | "VERIFICATION_FAILED"
   | "HIRE_REQUEST"
   | "HIRE_ACCEPTED"
-  | "HIRE_DECLINED";
+  | "HIRE_DECLINED"
+  | "PAYMENT_LOCKED"
+  | "PAYMENT_RELEASED"
+  | "PAYMENT_DISPUTED";
 
 export interface Notification {
   id: string;

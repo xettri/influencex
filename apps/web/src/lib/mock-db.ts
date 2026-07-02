@@ -1,7 +1,7 @@
 // In-memory mock database — mutated by mock-handler for stateful interactions.
 // Resets on page refresh (acceptable for demo purposes).
 
-import type { VerificationStatus, ApplicationStatus, NotificationType, PlatformName, DeliverableStatus } from "@influencex/shared";
+import type { VerificationStatus, ApplicationStatus, NotificationType, PlatformName, DeliverableStatus, PaymentStatus, PaymentType } from "@influencex/shared";
 
 interface MockNotification {
   id: string;
@@ -505,6 +505,28 @@ export const db = {
       submittedAt: "2026-06-19T12:00:00Z" as string | null,
       createdAt: "2026-06-01T10:00:00Z",
       updatedAt: "2026-06-19T12:00:00Z",
+    },
+  ],
+
+  payments: [
+    {
+      id: "mock-pay-001",
+      campaignId: "mock-camp-001" as string | null,
+      applicationId: "mock-app-001" as string | null,
+      directHireId: null as string | null,
+      influencerId: "mock-influencer-001" as string | null,
+      amount: 25000,
+      status: "LOCKED" as PaymentStatus,
+      type: "FLAT_FEE" as PaymentType,
+      lockedAt: "2026-06-20T10:00:00Z" as string | null,
+      releasedAt: null as string | null,
+      releaseAfter: null as string | null,
+      notes: "Summer Collection content creation fee" as string | null,
+      createdAt: "2026-06-20T10:00:00Z",
+      updatedAt: "2026-06-20T10:00:00Z",
+      campaign: { id: "mock-camp-001", title: "Summer Fashion Collection 2025", brand: { name: "Zara Lifestyle" } } as { id: string; title: string; brand: { name: string } } | null,
+      influencer: { id: "mock-influencer-001", displayName: "Priya Sharma" } as { id: string; displayName: string } | null,
+      directHire: null as { id: string; title: string } | null,
     },
   ],
 
